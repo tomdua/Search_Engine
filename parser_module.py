@@ -15,7 +15,7 @@ class Parse:
 
     def __init__(self):
         self.stop_words = stopwords.words('english')
-        new_words = {"","www", "https", "http", "^", "!", "?", "^", "&", "*", "#", "(", ")", ",", ";", ":", "{", "}", "--", "[", "]", "<",
+        new_words = {"www",'', "https", "http", "^", "!", "?", "^", "&", "*", "#", "(", ")", ",", ";", ":", "{", "}", "--", "[", "]", "<",
                      ">", "|", "+", "`", "'", "."}
         for i in new_words:
             self.stop_words.append(i)
@@ -88,7 +88,11 @@ class Parse:
             #################### parse emoji #########################
             #rx2 = re.compile(r'[^\w\s,]')
             text5 = [w for w in text if any(c for c in w if unicodedata.category(c) == 'So')]
-            text6 = [w for w in text if '\n' not in w and any(c for c in w if unicodedata.name(c).startswith("EMOJI MODIFIER"))]
+            try:
+                text6 = [w for w in text if '\n' not in w and '🩸' not in w and any(c for c in w if unicodedata.name(c).startswith("EMOJI MODIFIER"))]
+            except:
+                print("An exception occurred")
+
             #text5_new=[]
             if text5:
                 for w in text5:
@@ -146,7 +150,7 @@ class Parse:
         quote_text = doc_as_list[6]
         quote_url = doc_as_list[7]
         term_dict = {}
-        if len(url)>2:
+        if url:
             self.expandUrl= True
         # num= " WASHINGTON -- In the wake of a string of abuses by New York police officers in the 1990s, Loretta E. Lynch, the top federal prosecutor in Brooklyn, spoke forcefully about the pain of a broken trust that African-Americans felt and said the responsibility for repairing generations of miscommunication and mistrust fell to law enforcement."
         # full_text = full_text + num
@@ -162,8 +166,6 @@ class Parse:
         if self.expandUrl:
            tokinzed_url=self.parser_url(url)
            tokenized_text=tokenized_text+tokinzed_url
-
-
 
         doc_length = len(tokenized_text)
         for term in tokenized_text:
@@ -245,12 +247,12 @@ class Parse:
         tokenize = word_tokenize(url)
 
         for token in range(len(tokenize)):
-            new_token= re.split('[/\=:#?]', tokenize[token])
-            terms.extend(new_token)
+                new_token= re.split('[/\=:#?(www\.)]', tokenize[token])
+                terms.extend(new_token)
 
-        url_terms = [w for w in terms if w not in self.stop_words]
-
-
+        for token in range(len(terms)):
+            if terms[token] is not "" and terms[token] is not '{' and terms[token] is not '}':
+                url_terms.append(terms[token])
         return url_terms
 
     def get_continuous_chunks(self,text):
@@ -268,7 +270,22 @@ class Parse:
             else:
                     continue
         return continuous_chunk
-    #
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     # def parser_entity(self,text):
     #     words = nltk.word_tokenize(text)
     #     pos_tags = nltk.pos_tag(words)
