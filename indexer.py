@@ -13,18 +13,23 @@ class Indexer:
         :return: -
         """
 
+        my_list = []
         document_dictionary = document.term_doc_dictionary
         # Go over each term in the doc
         for term in document_dictionary.keys():
+            my_list.append(term)
+        my_list_no_duplicated = list(dict.fromkeys(my_list))
+
+        for term in my_list_no_duplicated:
             try:
                 # Update inverted index and posting
-                if term not in self.dictionaryTerms.keys():
-                    self.dictionaryTerms[term] = 1
-                    self.postingTerms[term] = []
+                if term not in self.inverted_idx.keys():
+                    self.inverted_idx[term] = 1
+                    self.postingDict[term] = []
                 else:
-                    self.dictionaryTerms[term] += 1
+                    self.inverted_idx[term] += 1
 
-                self.postingTerms[term].append((document.tweet_id, document_dictionary[term]))
+                self.postingDict[term].append((document.tweet_id, document_dictionary[term]))
 
             except:
                 print('problem with the following key {}'.format(term[0]))
