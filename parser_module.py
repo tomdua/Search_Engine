@@ -243,7 +243,6 @@ class Parse:
     """
     def parser_url(self, url):
         terms = []
-        url_terms=[]
         tokenize = word_tokenize(url)
 
         for token in range(len(tokenize)):
