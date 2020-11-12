@@ -2,7 +2,6 @@ import os
 import pandas as pd
 import glob
 
-
 class ReadFile:
     def __init__(self, corpus_path):
         self.corpus_path = corpus_path
@@ -16,6 +15,6 @@ class ReadFile:
         """
         # full_path = os.path.join(self.corpus_path, file_name)
         # df = pd.read_parquet(full_path, engine="pyarrow")
-        files = glob.glob('./Data1/**/*.parquet')
+        files = glob.glob('./Data/**/*.parquet')
         df = pd.concat([pd.read_parquet(fp) for fp in files])
         return df.values.tolist()
