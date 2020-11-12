@@ -4,17 +4,23 @@ import pandas as pd
 
 import nltk
 from nltk.tag import StanfordNERTagger
-from nltk import regexp_tokenize, TweetTokenizer
+from nltk import regexp_tokenize, TweetTokenizer, ne_chunk, pos_tag
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize, regexp
 from document import Document
+from nltk.tree import Tree
 
 
 class Parse:
 
     def __init__(self):
         self.stop_words = stopwords.words('english')
-        self.tempDocuments = []
+        new_words = {"www", "^", "!", "?", "^", "&", "*", "#", "(", ")", ",", ";", ":", "{", "}", "--", "[", "]", "<",
+                     ">", "|", "+", "`", "'", "."};
+        for i in new_words:
+            self.stop_words.append(i)
+        self.entity_temp=[]
+        # self.tempDocuments = []
 
     def parse_sentence(self, text):
         """
@@ -129,9 +135,6 @@ class Parse:
         :param doc_as_list: list re-preseting the tweet.
         :return: Document object with corresponding fields.
         """
-
-
-
         tweet_id = doc_as_list[0]
         tweet_date = doc_as_list[1]
         full_text = doc_as_list[2]
@@ -141,7 +144,7 @@ class Parse:
         quote_text = doc_as_list[6]
         quote_url = doc_as_list[7]
         term_dict = {}
-        # num= " #stayAtHome SectionsSEARCHSkip to contentSkip to site indexPoliticsSubscribeLog InSubscribeLog InToday's byF.B.I. Agent , in Texts, Is FiredImagePeter Strzok, a top counterintelligence agent who was taken off the special counsel investigation after his disparaging texts about President were uncovered, was fired. for and . , — , the senior counterintelligence agent who disparaged President in inflammatory text messages and helped oversee the email and investigations, has been fired for violating bureau policies, Mr. ’s lawyer said .Mr. Trump and his allies seized on the texts — exchanged during the campaign with a former lawyer, assailing the investigation"
+        # num= " WASHINGTON -- In the wake of a string of abuses by New York police officers in the 1990s, Loretta E. Lynch, the top federal prosecutor in Brooklyn, spoke forcefully about the pain of a broken trust that African-Americans felt and said the responsibility for repairing generations of miscommunication and mistrust fell to law enforcement."
         # full_text = full_text + num
         tokenized_text = self.parse_sentence(full_text)
         # tokinzed_hatags = self.parse_hashtag(full_text)
@@ -149,36 +152,12 @@ class Parse:
         tokinzed_queae=self.parse_queae(full_text)
         #tokinzed_entity=self.parser_entity(full_text)
 
-        # entities = []
-        # labels = []
-
-        # sentence = nltk.sent_tokenize(full_text)
-        # for sent in sentence:
-        #     for chunk in nltk.ne_chunk(nltk.pos_tag(nltk.word_tokenize(sent)), binary=False):
-        #         if hasattr(chunk, 'label'):
-        #             entities.append(' '.join(c[0] for c in chunk))
-        #             labels.append(chunk.label())
-        # entities_labels = list(set(zip(entities, labels)))
-
-        # model = 'C:/english.all.3class.distsim.crf.ser'
-        # jar = 'C:/stanford-ner'
-        # st = StanfordNERTagger(model, jar, encoding='utf-8')
-        # tokenized_text = nltk.word_tokenize(full_text)
-        # classified_text = st.tag(tokenized_text)
-
-        # netagged_words = classified_text
-
-        # entities = []
-        # labels = []
-        #
-        # from itertools import groupby
-        # for tag, chunk in groupby(classified_text, lambda x: x[1]):
-        #     if tag != "O":
-        #         entities.append(' '.join(w for w, t in chunk))
-        #         labels.append(tag)
+        tokinzed_entity=self.get_continuous_chunks(full_text)
+        tokinzed_entity_new=[e for e in tokinzed_entity if len(e.split())>1]
+        self.entity_temp=tokinzed_entity_new
 
 
-        tokenized_text=tokenized_text+tokinzed_queae
+        tokenized_text=tokenized_text+tokinzed_queae+tokinzed_entity_new
 
         doc_length = len(tokenized_text)
         for term in tokenized_text:
@@ -189,7 +168,7 @@ class Parse:
 
         document = Document(tweet_id, tweet_date, full_text, url, retweet_text, retweet_url, quote_text,
                             quote_url, term_dict, doc_length)
-        self.tempDocuments=self.tempDocuments+document
+        # self.tempDocuments=self.tempDocuments+document
         return document
 
     ############ private func ##############################
@@ -211,26 +190,6 @@ class Parse:
         matches = re.findall(r'\"(.+?)\"', text)
         return matches
 
-
-    # def parse_phones(self,text):
-    #     parse_trem=[]
-    #     phones = re.findall('(?:\+ *)?\d[\d\- ]{7,}\d', text)
-    #     parse_trem= ([phone.replace('-', '').replace(' ', '') for phone in phones])
-    #     return parse_trem
-    #
-    #     # tokenize = word_tokenize(text)
-    #     # smile_trem=[]
-    #     # a = '1,000,000.52'
-    #     # tom =  int(a.replace(',', ''))
-    #     # for i in range(len(tokenize)):
-    #     #     tom =re.split('[ ]', tokenize[i])
-    #     #     if tokenize[i] is unicode(u"\U0001F621") or tokenize[i] is unicode(u"\U0001F620")or tokenize[i] is unicode(u"\U0001F622"):
-    #     #         smile_trem.append(tokenize[i])
-    #     #
-    #     # return smile_trem
-    #
-    #     # d = r'\d{4}-\d?\d-\d?\d (?:2[0-3]|[01]?[0-9]):[0-5]?[0-9]:[0-5]?[0-9]'
-    #     # print(re.findall(r'{0}.*?(?=\s*{0}|$)'.format(d), text, re.DOTALL))
 
 
     def parse_mentions (self,text):
@@ -287,6 +246,36 @@ class Parse:
             if terms[token] is not "" and terms[token] is not '{' and terms[token] is not '}':
                 url_terms.append(terms[token])
         return url_terms
+
+    def get_continuous_chunks(self,text):
+        chunked = ne_chunk(pos_tag(word_tokenize(text)))
+        continuous_chunk = []
+        current_chunk = []
+        for i in chunked:
+            if type(i) == Tree:
+                current_chunk.append(" ".join([token for token, pos in i.leaves()]))
+            if current_chunk:
+                named_entity = " ".join(current_chunk)
+                if named_entity not in continuous_chunk:
+                    continuous_chunk.append(named_entity)
+                    current_chunk = []
+            else:
+                    continue
+        return continuous_chunk
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
     def parser_entity(self,text):

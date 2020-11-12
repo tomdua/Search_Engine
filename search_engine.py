@@ -21,40 +21,72 @@ def run_engine():
     indexer = Indexer(config)
     documents_list = r.read_file()
     term_dict = {}
+    documents_list_afterParser=[]
+    entity_dict_temp={}
 
     # Iterate over every document in the file
     for idx, document in enumerate(documents_list):
         # parse the document
         parsed_document = p.parse_doc(document)
         number_of_documents += 1
+        documents_list_afterParser.append(parsed_document)
+
+        #enter to temp entity dic
+        for entity in p.entity_temp:
+            if entity not in entity_dict_temp.keys():
+                entity_dict_temp[entity] = 1
+            else:
+                entity_dict_temp[entity] += 1
+
+    ###################### For small/big Capital letters ##################################
+    for document in documents_list_afterParser:
+        for term in document.term_doc_dictionary:
+            if term not in term_dict.keys():
+                term_dict[term] = 1
+            else:
+                term_dict[term] += 1
+
+    for document in documents_list_afterParser:
+        for term in document.term_doc_dictionary.copy():
+            if isinstance(term, str):
+                if term[0].isupper():
+                    if term.lower() in term_dict:
+                        term1=term.lower()
+                        document.term_doc_dictionary[term1] = document.term_doc_dictionary.pop(term)
+                        #del document.term_doc_dictionary[term]
+                    elif term.isupper():
+                        continue
+                    else:
+                        term2=term.upper()
+                        document.term_doc_dictionary[term2] = document.term_doc_dictionary.pop(term)
+                        #del document.term_doc_dictionary[term]
+
+    ########################################################################################
+
+    ###################### For entities ####################################################
+
+    for document in documents_list_afterParser:
+        for term in document.term_doc_dictionary.copy():
+            if term in entity_dict_temp:
+                if entity_dict_temp[term]>1:
+                    continue
+                elif entity_dict_temp[term]==1:
+                    del document.term_doc_dictionary[term]
+            else:
+                continue
+    ########################################################################################
+
+    ########################################################################################
+
+    ####################### index the parse document data ##################################
+
+    for document in documents_list_afterParser:
+        indexer.add_new_doc(document)
 
 
-    ###################### For small/big Capital letters ##################
-    #     for term in parsed_document.term_doc_dictionary:
-    #         if term not in term_dict.keys():
-    #             term_dict[term] = 1
-    #         else:
-    #             term_dict[term] += 1
-    #
-    # for term in dict(sorted(term_dict.items())):
-    #     if term[0].isupper():
-    #         if term.lower() in term_dict:
-    #             term_dict[term.lower()] += term_dict[term]
-    #             del term_dict[term]
-    #       #term_dict[term.lower()] += term_dict[term]
-    #             #if not term.isupper():
-    #                 #del term_dict[term]
-    #     elif term[0].isupper() and term_dict[term] > 1:
-    #         term_dict[term.upper()] += term_dict[term]
-    #         del term_dict[term]
-    ##############################################################
-        # index the document data
-        #indexer.add_new_doc(parsed_document)
-    temp=p.tempDocuments
     print('Finished parsing and indexing. Starting to export files')
     utils.save_obj(indexer.inverted_idx, "inverted_idx")
     utils.save_obj(indexer.postingDict, "posting")
-
 
 def load_index():
     print('Load inverted index')
