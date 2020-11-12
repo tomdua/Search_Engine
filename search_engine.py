@@ -7,13 +7,15 @@ from searcher import Searcher
 import utils
 
 
+
+
 def run_engine():
     """
 
     :return:
     """
     number_of_documents = 0
-
+    usingStemming = False
     config = ConfigClass()
     r = ReadFile(corpus_path=config.get__corpusPath())
     p = Parse()
@@ -51,18 +53,20 @@ def run_engine():
     for document in documents_list_afterParser:
         for term in document.term_doc_dictionary.copy():
             if isinstance(term, str):
-                if term[0].isupper():
-                    if term.lower() in term_dict:
-                        term1=term.lower()
-                        document.term_doc_dictionary[term1] = document.term_doc_dictionary.pop(term)
-                        #del document.term_doc_dictionary[term]
-                    elif term.isupper():
-                        continue
-                    else:
-                        term2=term.upper()
-                        document.term_doc_dictionary[term2] = document.term_doc_dictionary.pop(term)
-                        #del document.term_doc_dictionary[term]
-
+                try:
+                    if term[0].isupper():
+                        if term.lower() in term_dict:
+                            term1=term.lower()
+                            document.term_doc_dictionary[term1] = document.term_doc_dictionary.pop(term)
+                            #del document.term_doc_dictionary[term]
+                        elif term.isupper():
+                            continue
+                        else:
+                            term2=term.upper()
+                            document.term_doc_dictionary[term2] = document.term_doc_dictionary.pop(term)
+                            #del document.term_doc_dictionary[term]
+                except:
+                    print('as')
     ########################################################################################
 
     ###################### For entities ####################################################
@@ -84,13 +88,14 @@ def run_engine():
 
     for count,document in enumerate(documents_list_afterParser,1):#to parse 1000 doc
         indexer.add_new_doc(document)
-        inverted_idx_for1000.append(indexer.inverted_idx)
-        postingDict_for1000.append(indexer.postingDict)
+        #inverted_idx_for1000.append(indexer.inverted_idx)
+        #postingDict_for1000.append(indexer.postingDict)
         if count%10==0:
-            print('Finished parsing and indexing 1000 documents. Starting to export files')
+            #print('Finished parsing and indexing 1000 documents. Starting to export files')
             #print('Finished parsing and indexing. Starting to export files')
-            utils.save_obj(inverted_idx_for1000, "inverted_idx")
-            utils.save_obj(postingDict_for1000, "posting")
+            utils.save_obj(indexer.dictionaryTerms, "inverted_idx")
+            utils.save_obj(indexer.postingTerms, "posting")
+            print(utils.load_obj("inverted_idx"))
 
 def load_index():
     print('Load inverted index')
@@ -108,6 +113,7 @@ def search_and_rank_query(query, inverted_index, k):
 
 
 def main():
+
     run_engine()
     query = input("Please enter a query: ")
     k = int(input("Please enter number of docs to retrieve: "))

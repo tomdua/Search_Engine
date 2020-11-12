@@ -15,7 +15,7 @@ class Parse:
 
     def __init__(self):
         self.stop_words = stopwords.words('english')
-        new_words = {"www", "https", "http", "^", "!", "?", "^", "&", "*", "#", "(", ")", ",", ";", ":", "{", "}", "--", "[", "]", "<",
+        new_words = {"www",'', "https", "http", "^", "!", "?", "^", "&", "*", "#", "(", ")", ",", ";", ":", "{", "}", "--", "[", "]", "<",
                      ">", "|", "+", "`", "'", "."}
         for i in new_words:
             self.stop_words.append(i)
@@ -88,7 +88,11 @@ class Parse:
             #################### parse emoji #########################
             #rx2 = re.compile(r'[^\w\s,]')
             text5 = [w for w in text if any(c for c in w if unicodedata.category(c) == 'So')]
-            text6 = [w for w in text if '\n' not in w and any(c for c in w if unicodedata.name(c).startswith("EMOJI MODIFIER"))]
+            try:
+                text6 = [w for w in text if '\n' not in w and '🩸' not in w and any(c for c in w if unicodedata.name(c).startswith("EMOJI MODIFIER"))]
+            except:
+                print("An exception occurred")
+
             #text5_new=[]
             if text5:
                 for w in text5:
@@ -282,23 +286,23 @@ class Parse:
 
 
 
-    def parser_entity(self,text):
-        words = nltk.word_tokenize(text)
-        pos_tags = nltk.pos_tag(words)
-        chunks = nltk.ne_chunk(pos_tags, binary=False)  # either NE or not NE
-        entities = []
-        labels = []
-        mylist=[]
-        for chunk in chunks:
-            if hasattr(chunk, 'label'):
-                # print(chunk)
-                entities.append(' '.join(c[0] for c in chunk))
-                labels.append(chunk.label())
-
-        entities_labels = list(set(zip(entities, labels)))
-        entities_df = pd.DataFrame(entities_labels)
-        if len(entities_df) > 0 :
-            entities_df.columns = ["Entities", "Labels"]
-            mylist=list(dict.fromkeys(entities_df["Entities"]))
-
-        return mylist
+    # def parser_entity(self,text):
+    #     words = nltk.word_tokenize(text)
+    #     pos_tags = nltk.pos_tag(words)
+    #     chunks = nltk.ne_chunk(pos_tags, binary=False)  # either NE or not NE
+    #     entities = []
+    #     labels = []
+    #     mylist=[]
+    #     for chunk in chunks:
+    #         if hasattr(chunk, 'label'):
+    #             # print(chunk)
+    #             entities.append(' '.join(c[0] for c in chunk))
+    #             labels.append(chunk.label())
+    #
+    #     entities_labels = list(set(zip(entities, labels)))
+    #     entities_df = pd.DataFrame(entities_labels)
+    #     if len(entities_df) > 0 :
+    #         entities_df.columns = ["Entities", "Labels"]
+    #         mylist=list(dict.fromkeys(entities_df["Entities"]))
+    #
+    #     return mylist

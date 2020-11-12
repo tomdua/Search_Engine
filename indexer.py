@@ -1,8 +1,8 @@
 class Indexer:
 
     def __init__(self, config):
-        self.inverted_idx = {}
-        self.postingDict = {}
+        self.dictionaryTerms = {}
+        self.postingTerms = {}
         self.config = config
 
     def add_new_doc(self, document):
@@ -18,13 +18,13 @@ class Indexer:
         for term in document_dictionary.keys():
             try:
                 # Update inverted index and posting
-                if term not in self.inverted_idx.keys():
-                    self.inverted_idx[term] = 1
-                    self.postingDict[term] = []
+                if term not in self.dictionaryTerms.keys():
+                    self.dictionaryTerms[term] = 1
+                    self.postingTerms[term] = []
                 else:
-                    self.inverted_idx[term] += 1
+                    self.dictionaryTerms[term] += 1
 
-                self.postingDict[term].append((document.tweet_id, document_dictionary[term]))
+                self.postingTerms[term].append((document.tweet_id, document_dictionary[term]))
 
             except:
                 print('problem with the following key {}'.format(term[0]))
