@@ -23,6 +23,8 @@ def run_engine():
     term_dict = {}
     documents_list_afterParser=[]
     entity_dict_temp={}
+    inverted_idx_for1000 = []
+    postingDict_for1000 = []
 
     # Iterate over every document in the file
     for idx, document in enumerate(documents_list):
@@ -80,13 +82,15 @@ def run_engine():
 
     ####################### index the parse document data ##################################
 
-    for document in documents_list_afterParser:
+    for count,document in enumerate(documents_list_afterParser,1):#to parse 1000 doc
         indexer.add_new_doc(document)
-
-
-    print('Finished parsing and indexing. Starting to export files')
-    utils.save_obj(indexer.inverted_idx, "inverted_idx")
-    utils.save_obj(indexer.postingDict, "posting")
+        inverted_idx_for1000.append(indexer.inverted_idx)
+        postingDict_for1000.append(indexer.postingDict)
+        if count%10==0:
+            print('Finished parsing and indexing 1000 documents. Starting to export files')
+            #print('Finished parsing and indexing. Starting to export files')
+            utils.save_obj(inverted_idx_for1000, "inverted_idx")
+            utils.save_obj(postingDict_for1000, "posting")
 
 def load_index():
     print('Load inverted index')

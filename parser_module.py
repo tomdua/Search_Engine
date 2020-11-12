@@ -15,12 +15,12 @@ class Parse:
 
     def __init__(self):
         self.stop_words = stopwords.words('english')
-        new_words = {"www", "^", "!", "?", "^", "&", "*", "#", "(", ")", ",", ";", ":", "{", "}", "--", "[", "]", "<",
-                     ">", "|", "+", "`", "'", "."};
+        new_words = {"www", "https", "http", "^", "!", "?", "^", "&", "*", "#", "(", ")", ",", ";", ":", "{", "}", "--", "[", "]", "<",
+                     ">", "|", "+", "`", "'", "."}
         for i in new_words:
             self.stop_words.append(i)
         self.entity_temp=[]
-        # self.tempDocuments = []
+        self.expandUrl = False
 
     def parse_sentence(self, text):
         """
@@ -102,11 +102,11 @@ class Parse:
 
             #################### hashtags ########################
             tokinzed_hatags = self.parse_hashtag(text)
-            rx2 = re.compile(r'(#[^\s]+)')
-            text7 = rx2.findall(text)
+            # rx2 = re.compile(r'(#[^\s]+)')
+            # text7 = rx2.findall(text)
             #text4_correct = []
-            if text7:
-                for w in text7:
+            if tokinzed_hatags:
+                for w in tokinzed_hatags:
                     text = text.replace(w, '', 1)
             #######################################################
 
@@ -123,7 +123,9 @@ class Parse:
 
             #text_tokens1 = word_tokenize(text)
             text_tokens=regexp_tokenize(text, pattern=r"\s|[\.,;']\d+\.\d+", gaps=True)
-            text_tokens=text_tokens+text1+text3_new+text2+text4_correct+text5+tokinzed_hatags+tokinzed_mentions
+            text_tokens=text_tokens+text1+text3_new+text2+text5+tokinzed_hatags+tokinzed_mentions
+            if not self.expandUrl:
+                text_tokens=text_tokens+text4_correct
         else:
             return
         text_tokens_without_stopwords = [w for w in text_tokens if w not in self.stop_words]
@@ -144,20 +146,22 @@ class Parse:
         quote_text = doc_as_list[6]
         quote_url = doc_as_list[7]
         term_dict = {}
+        if url:
+            self.expandUrl= True
         # num= " WASHINGTON -- In the wake of a string of abuses by New York police officers in the 1990s, Loretta E. Lynch, the top federal prosecutor in Brooklyn, spoke forcefully about the pain of a broken trust that African-Americans felt and said the responsibility for repairing generations of miscommunication and mistrust fell to law enforcement."
         # full_text = full_text + num
         tokenized_text = self.parse_sentence(full_text)
-        # tokinzed_hatags = self.parse_hashtag(full_text)
-        # tokinzed_mentions=self.parse_mentions(full_text)
         tokinzed_queae=self.parse_queae(full_text)
-        #tokinzed_entity=self.parser_entity(full_text)
 
         tokinzed_entity=self.get_continuous_chunks(full_text)
         tokinzed_entity_new=[e for e in tokinzed_entity if len(e.split())>1]
         self.entity_temp=tokinzed_entity_new
 
-
         tokenized_text=tokenized_text+tokinzed_queae+tokinzed_entity_new
+
+        if self.expandUrl:
+           tokinzed_url=self.parser_url(url)
+           tokenized_text=tokenized_text+tokinzed_url
 
         doc_length = len(tokenized_text)
         for term in tokenized_text:
