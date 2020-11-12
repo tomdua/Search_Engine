@@ -1,1 +1,10 @@
 Data
+requirements.txt
+venv
+instructions.txt
+inverted_idx.pkl
+posting.pkl
+python_install.sh
+run.bat
+run.sh
+sample3.parquet

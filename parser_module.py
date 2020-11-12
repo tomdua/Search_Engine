@@ -15,7 +15,7 @@ class Parse:
 
     def __init__(self):
         self.stop_words = stopwords.words('english')
-        new_words = {"www",'', "https", "http", "^", "!", "?", "^", "&", "*", "#", "(", ")", ",", ";", ":", "{", "}", "--", "[", "]", "<",
+        new_words = {"" ,"www",'', "https", "http", "^", "!", "?", "^", "&", "*", "#", "(", ")", ",", ";", ":", "{", "}", "--", "[", "]", "<",
                      ">", "|", "+", "`", "'", "."}
         for i in new_words:
             self.stop_words.append(i)
@@ -247,13 +247,11 @@ class Parse:
         tokenize = word_tokenize(url)
 
         for token in range(len(tokenize)):
-                new_token= re.split('[/\=:#?(www\.)]', tokenize[token])
+                new_token= re.split('[/\=:#?]', tokenize[token])
                 terms.extend(new_token)
+        text_tokens_without_stopwords = [w for w in terms if w not in self.stop_words]
 
-        for token in range(len(terms)):
-            if terms[token] is not "" and terms[token] is not '{' and terms[token] is not '}':
-                url_terms.append(terms[token])
-        return url_terms
+        return text_tokens_without_stopwords
 
     def get_continuous_chunks(self,text):
         chunked = ne_chunk(pos_tag(word_tokenize(text)))
