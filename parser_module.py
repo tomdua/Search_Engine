@@ -15,7 +15,7 @@ class Parse:
 
     def __init__(self):
         self.stop_words = stopwords.words('english')
-        new_words = {"www", "https", "http", "^", "!", "?", "^", "&", "*", "#", "(", ")", ",", ";", ":", "{", "}", "--", "[", "]", "<",
+        new_words = {"","www", "https", "http", "^", "!", "?", "^", "&", "*", "#", "(", ")", ",", ";", ":", "{", "}", "--", "[", "]", "<",
                      ">", "|", "+", "`", "'", "."}
         for i in new_words:
             self.stop_words.append(i)
@@ -146,7 +146,7 @@ class Parse:
         quote_text = doc_as_list[6]
         quote_url = doc_as_list[7]
         term_dict = {}
-        if url:
+        if len(url)>2:
             self.expandUrl= True
         # num= " WASHINGTON -- In the wake of a string of abuses by New York police officers in the 1990s, Loretta E. Lynch, the top federal prosecutor in Brooklyn, spoke forcefully about the pain of a broken trust that African-Americans felt and said the responsibility for repairing generations of miscommunication and mistrust fell to law enforcement."
         # full_text = full_text + num
@@ -162,6 +162,8 @@ class Parse:
         if self.expandUrl:
            tokinzed_url=self.parser_url(url)
            tokenized_text=tokenized_text+tokinzed_url
+
+
 
         doc_length = len(tokenized_text)
         for term in tokenized_text:
@@ -243,12 +245,12 @@ class Parse:
         tokenize = word_tokenize(url)
 
         for token in range(len(tokenize)):
-                new_token= re.split('[/\=:#?(www\.)]', tokenize[token])
-                terms.extend(new_token)
+            new_token= re.split('[/\=:#?]', tokenize[token])
+            terms.extend(new_token)
 
-        for token in range(len(terms)):
-            if terms[token] is not "" and terms[token] is not '{' and terms[token] is not '}':
-                url_terms.append(terms[token])
+        url_terms = [w for w in terms if w not in self.stop_words]
+
+
         return url_terms
 
     def get_continuous_chunks(self,text):
@@ -266,39 +268,24 @@ class Parse:
             else:
                     continue
         return continuous_chunk
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    def parser_entity(self,text):
-        words = nltk.word_tokenize(text)
-        pos_tags = nltk.pos_tag(words)
-        chunks = nltk.ne_chunk(pos_tags, binary=False)  # either NE or not NE
-        entities = []
-        labels = []
-        mylist=[]
-        for chunk in chunks:
-            if hasattr(chunk, 'label'):
-                # print(chunk)
-                entities.append(' '.join(c[0] for c in chunk))
-                labels.append(chunk.label())
-
-        entities_labels = list(set(zip(entities, labels)))
-        entities_df = pd.DataFrame(entities_labels)
-        if len(entities_df) > 0 :
-            entities_df.columns = ["Entities", "Labels"]
-            mylist=list(dict.fromkeys(entities_df["Entities"]))
-
-        return mylist
+    #
+    # def parser_entity(self,text):
+    #     words = nltk.word_tokenize(text)
+    #     pos_tags = nltk.pos_tag(words)
+    #     chunks = nltk.ne_chunk(pos_tags, binary=False)  # either NE or not NE
+    #     entities = []
+    #     labels = []
+    #     mylist=[]
+    #     for chunk in chunks:
+    #         if hasattr(chunk, 'label'):
+    #             # print(chunk)
+    #             entities.append(' '.join(c[0] for c in chunk))
+    #             labels.append(chunk.label())
+    #
+    #     entities_labels = list(set(zip(entities, labels)))
+    #     entities_df = pd.DataFrame(entities_labels)
+    #     if len(entities_df) > 0 :
+    #         entities_df.columns = ["Entities", "Labels"]
+    #         mylist=list(dict.fromkeys(entities_df["Entities"]))
+    #
+    #     return mylist
