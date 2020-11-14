@@ -15,12 +15,16 @@ class Parse:
 
     def __init__(self):
         self.stop_words = stopwords.words('english')
-        new_words = {"" ,"www",'', "https", "http", "^", "!", "?", "^", "&", "*", "#", "(", ")", ",", ";", ":", "{", "}", "--", "[", "]", "<",
-                     ">", "|", "+", "`", "'", "."}
+        new_words = {"", "www", '', "https", "http", "^", "!", "?", "^", "&", "*", "#", "(", ")", ",", ";", ":", "{",
+                     "}", "-", "[", "]", "<", ">", "|", "+", "`", "'", ".", "...", "..", "@", "’", "I", "“", "•",
+                     "️", "⬇", "'s", "``", "''", "”", "@:", "_","++.pls","....","......",".....","=","—"}
+
         for i in new_words:
             self.stop_words.append(i)
-        self.entity_temp=[]
+        self.entity_temp = []
         self.expandUrl = False
+        self.stemming = None
+
 
     def parse_sentence(self, text):
         """
@@ -28,7 +32,6 @@ class Parse:
         :param text:
         :return:
         """
-
 
         if text:
             if '%' in text or 'percent' in text or 'percentage' in text or 'percentage' in text or 'Thousand' in text or 'Million' in text or 'Billion' in text:
@@ -43,57 +46,65 @@ class Parse:
                 if 'Billion' in text:
                     text = text.replace(' Billion', '%')
 
-            ########## for fruction ##########
-            rx2 = re.compile(r"[-+]?\d*\s\d+\/\d*")
+            ########## for precent ##################################################
+            rx2 = re.compile(r"[-+]?\d*\.?\d*\%")
+            text0 = rx2.findall(text)
+            if text0:
+                for w in text0:
+                    text = text.replace(w, '', 1)
+            #########################################################################
+
+            ########## for fruction #################################################
+            rx2 = re.compile(r"[-+]?\d+\s+\d+\/\d+|[-+]?\d+\/\d+")
             text1 = rx2.findall(text)
             if text1:
-              for w in text1:
-                  text=text.replace(w, '',1)
-            ###############################
+                for w in text1:
+                    text = text.replace(w, '', 1)
+            #########################################################################
 
-            ############ for numbers with point ########
-            rx2 = re.compile(r'[-+]?\d+[\d.-]+\d+')
+            ############ for numbers with point #####################################
+            rx2 = re.compile(r'[-+]?\d+\.+\d+\.*\d*\.*\d*\.*\d*')
             text3 = rx2.findall(text)
-            text3_new= []
+            text3_new = []
             if text3:
-                text3_new = [e for e in text3 if '%' not in e and e.count('.')==1]
+                text3_new = [e for e in text3 if '%' not in e and e.count('.') == 1]
             if text3_new:
-              for w in text3_new:
-                  text=text.replace(w, '',1)
-            text3_new=[self.change_format(float(w)) for w in text3_new]
-            ###############################################
+                for w in text3_new:
+                    text = text.replace(w, '', 1)
+            text3_new = [self.change_format(float(w)) for w in text3_new]
+            #########################################################################
 
-            ############ for numbers with comma ##########
-            rx2 = re.compile(r"[-+]?\d+\,*\d+\,*\d+\,*\d+")
+            ############ for numbers with comma #####################################
+            rx2 = re.compile(r"[-+]?\d+\,+\d+\,*\d+\,*\d+")
             text2 = rx2.findall(text)
             if text2:
-              for w in text2:
-                  text=text.replace(w, '',1)
-            text2=[self.change_format(int(w.replace(',', ''))) for w in text2]
-            ###############################################
+                for w in text2:
+                    text = text.replace(w, '', 1)
+            text2 = [self.change_format(int(w.replace(',', ''))) for w in text2]
+            #########################################################################
 
             #################### parse url #########################
             rx2 = re.compile(r'(https?://[^\s]+)')
             text4 = rx2.findall(text)
-            text4_correct=[]
+            text4_correct = []
             if text4:
                 for w in text4:
                     text = text.replace(w, '', 1)
-                    text4_correct=text4_correct+self.parser_url(w)
+                    text4_correct = text4_correct + self.parser_url(w)
             #######################################################
 
-
-            #test=[w for w in text if any(c for c in w if unicodedata.category(c) == 'So')]
+            # test=[w for w in text if any(c for c in w if unicodedata.category(c) == 'So')]
 
             #################### parse emoji #########################
-            #rx2 = re.compile(r'[^\w\s,]')
+            # rx2 = re.compile(r'[^\w\s,]')
             text5 = [w for w in text if any(c for c in w if unicodedata.category(c) == 'So')]
             try:
-                text6 = [w for w in text if '\n' not in w and '🩸' not in w and any(c for c in w if unicodedata.name(c).startswith("EMOJI MODIFIER"))]
+                text6 = [w for w in text if '\n' not in w and '🩸' not in w and any(
+                    c for c in w if unicodedata.name(c).startswith("EMOJI MODIFIER"))]
             except:
                 print("An exception occurred")
 
-            #text5_new=[]
+            # text5_new=[]
             if text5:
                 for w in text5:
                     text = text.replace(w, '', 1)
@@ -101,14 +112,14 @@ class Parse:
                 for w in text6:
                     text = text.replace(w, '', 1)
 
-                    #text4_correct = text4_correct + self.parser_url(w)
+                    # text4_correct = text4_correct + self.parser_url(w)
             #######################################################
 
             #################### hashtags ########################
             tokinzed_hatags = self.parse_hashtag(text)
             # rx2 = re.compile(r'(#[^\s]+)')
             # text7 = rx2.findall(text)
-            #text4_correct = []
+            # text4_correct = []
             if tokinzed_hatags:
                 for w in tokinzed_hatags:
                     text = text.replace(w, '', 1)
@@ -116,23 +127,38 @@ class Parse:
 
             #################### mentions #########################
             tokinzed_mentions = self.parse_mentions(text)
-            #rx2 = re.compile(r'(@[^\s]+)')
-            #text8 = rx2.findall(text)
+            # rx2 = re.compile(r'(@[^\s]+)')
+            # text8 = rx2.findall(text)
             # text4_correct = []
             if tokinzed_mentions:
                 for w in tokinzed_mentions:
                     text = text.replace(w, '', 1)
             #######################################################
 
+            ########## for some other words ######################
+            rx2 = re.compile(r"[-+]?\d*\w*\…|\w*\/|\w*\'\w*")
+            text8 = rx2.findall(text)
+            if text8:
+                for w in text8:
+                    # if '/' in w:
+                    #     w_new=w.replace("/", '', 1)
+                    #     text8.remove(w)
+                    #     text8.append(w_new)
+                    if "'" in w:
+                        text8.remove(w)
+                    text = text.replace(w, '', 1)
+            ################################################
 
-            #text_tokens1 = word_tokenize(text)
-            text_tokens=regexp_tokenize(text, pattern=r"\s|[\.,;']\d+\.\d+", gaps=True)
-            text_tokens=text_tokens+text1+text3_new+text2+text5+tokinzed_hatags+tokinzed_mentions
+            text_tokens = word_tokenize(text)
+            # text_tokens=regexp_tokenize(text, pattern=r"\s|[\.,;']\d+\.\d+", gaps=True)
+            text_tokens = text_tokens + text0 + text1 + text3_new + text2 + text5 + tokinzed_hatags + tokinzed_mentions
             if not self.expandUrl:
-                text_tokens=text_tokens+text4_correct
+                text_tokens = text_tokens + text4_correct
         else:
             return
         text_tokens_without_stopwords = [w for w in text_tokens if w not in self.stop_words]
+        if self.stemming:
+            text_tokens_without_stopwords = [self.stemming.stem_term(w) for w in text_tokens_without_stopwords]
         return text_tokens_without_stopwords
 
     def parse_doc(self, doc_as_list):
@@ -151,23 +177,25 @@ class Parse:
         quote_url = doc_as_list[7]
         term_dict = {}
         if url:
-            self.expandUrl= True
-        # num= " WASHINGTON -- In the wake of a string of abuses by New York police officers in the 1990s, Loretta E. Lynch, the top federal prosecutor in Brooklyn, spoke forcefully about the pain of a broken trust that African-Americans felt and said the responsibility for repairing generations of miscommunication and mistrust fell to law enforcement."
-        # full_text = full_text + num
+            self.expandUrl = True
+        num = " Covid/covid-19 it's"
+        full_text = full_text + num
+
         tokenized_text = self.parse_sentence(full_text)
-        tokinzed_queae=self.parse_queae(full_text)
+        tokinzed_queae = self.parse_queae(full_text)
+        # if tokinzed_queae:
+        #     test=1
+        tokinzed_entity = self.get_continuous_chunks(full_text)
+        tokinzed_entity_new = [e for e in tokinzed_entity if len(e.split()) > 1]
+        self.entity_temp = tokinzed_entity_new
 
-        tokinzed_entity=self.get_continuous_chunks(full_text)
-        tokinzed_entity_new=[e for e in tokinzed_entity if len(e.split())>1]
-        self.entity_temp=tokinzed_entity_new
-
-        tokenized_text=tokenized_text+tokinzed_queae+tokinzed_entity_new
+        tokenized_text = tokenized_text + tokinzed_queae + tokinzed_entity_new
 
         if self.expandUrl:
-           tokinzed_url=self.parser_url(url)
-           tokenized_text=tokenized_text+tokinzed_url
+            tokinzed_url = self.parser_url(url)
+            tokenized_text = tokenized_text + tokinzed_url
 
-        doc_length = len(tokenized_text)
+        doc_length = len(full_text)
         for term in tokenized_text:
             if term not in term_dict.keys():
                 term_dict[term] = 1
@@ -181,8 +209,8 @@ class Parse:
 
     ############ private func ##############################
 
-    def change_format(self,num):
-        if num>999:
+    def change_format(self, num):
+        if num > 999:
             magnitude = 0
             while abs(num) >= 1000:
                 magnitude += 1
@@ -190,33 +218,29 @@ class Parse:
             # add more suffixes if you need them
             return '%.3f%s' % (num, ['', 'K', 'M', 'B', 'T', 'P'][magnitude])
         else:
-            return num
+            return str(num)
 
-
-
-    def parse_queae(self,text):
+    def parse_queae(self, text):
         matches = re.findall(r'\"(.+?)\"', text)
         return matches
 
-
-
-    def parse_mentions (self,text):
-        mentions_trem=[]
+    def parse_mentions(self, text):
+        mentions_trem = []
         tokenize = word_tokenize(text)
-        for i in range(len(tokenize)-1):
+        for i in range(len(tokenize) - 1):
             if tokenize[i] is '@':
-                mentions_trem.append('@'+tokenize[i+1])
+                mentions_trem.append('@' + tokenize[i + 1])
         return mentions_trem
 
-    def parse_hashtag(self,text):
+    def parse_hashtag(self, text):
         hashtags = []
-        hashtags_trem=[]
+        hashtags_trem = []
         patterns = '([A-Z][a-z]+)'
         tokenize = word_tokenize(text)
-        for i in range(len(tokenize)-1):
-            to=tokenize[i]
+        for i in range(len(tokenize) - 1):
+            to = tokenize[i]
             if tokenize[i] is '#':
-                word = tokenize[i+1]
+                word = tokenize[i + 1]
                 hashtags.append(word)
 
         for i in range(len(hashtags)):
@@ -231,9 +255,7 @@ class Parse:
                 split = re.sub(patterns, r' \1', re.sub('([A-Z]+)', r' \1', hashtags[token])).split()
                 hashtags_trem.extend(word.lower() for word in split)
 
-
         return hashtags_trem
-
 
     """
     split and fix the terms in url
@@ -241,18 +263,19 @@ class Parse:
     @param tokenize
     @return array of terms from the url
     """
+
     def parser_url(self, url):
         terms = []
         tokenize = word_tokenize(url)
 
         for token in range(len(tokenize)):
-                new_token= re.split('[/\=:#?]', tokenize[token])
-                terms.extend(new_token)
-        text_tokens_without_stopwords = [w for w in terms if w not in self.stop_words]
+            new_token = re.split('[/\=:#?]', tokenize[token])
+            terms.extend(new_token)
+        url_parse = [w for w in terms if w not in self.stop_words]
 
-        return text_tokens_without_stopwords
+        return url_parse
 
-    def get_continuous_chunks(self,text):
+    def get_continuous_chunks(self, text):
         chunked = ne_chunk(pos_tag(word_tokenize(text)))
         continuous_chunk = []
         current_chunk = []
@@ -265,23 +288,8 @@ class Parse:
                     continuous_chunk.append(named_entity)
                     current_chunk = []
             else:
-                    continue
+                continue
         return continuous_chunk
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     # def parser_entity(self,text):
     #     words = nltk.word_tokenize(text)

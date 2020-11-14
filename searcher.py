@@ -19,7 +19,7 @@ class Searcher:
         :param query: query
         :return: dictionary of relevant documents.
         """
-        posting = utils.load_obj("posting")
+        posting = utils.load_obj("posting_file")
         relevant_docs = {}
         for term in query:
             try: # an example of checks that you have to do
