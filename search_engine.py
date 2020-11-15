@@ -1,5 +1,3 @@
-import collections
-
 from reader import ReadFile
 from configuration import ConfigClass
 from parser_module import Parse
@@ -15,27 +13,16 @@ def findInList(val, lis):
     return ind[0][0] if ind else None
 
 
-
 def run_engine():
     """
-
     :return:
     """
-    # AB_dict_test2 = utils.load_obj("posting_file")
-    # AB_dict_test2 = AB_dict_test2[len(AB_dict_test2) - 1]
+
+    # posting_file = utils.load_obj("posting_file")
+    # posting_file=posting_file[0]
     #
-    # dict=utils.load_obj("inverted_idx")
-    # dict = dict[len(dict) - 1]
-    #
-    # dictest = utils.load_obj("inverted_idx_test")
-    # dictest = dictest[len(dictest) - 1]
-
-
-
-    # AB_posting=collections.OrderedDict(sorted(AB_dict_test2[len(AB_dict_test2)-1].items()))
-    # AB_dict_posting=collections.OrderedDict(sorted(dict[len(dict)-1].items()))
-
-
+    # inverted_idx=utils.load_obj("inverted_idx")
+    # inverted_idx=inverted_idx[0]
 
 
     config = ConfigClass()
@@ -44,85 +31,28 @@ def run_engine():
     stemming = Stemmer()
     indexer = Indexer(config)
     documents_list = r.read_file()
-    term_dict = {}
-    documents_list_afterParser = []
-    entity_dict_temp = {}
     number_of_documents = 0
-    usingStemming =input("You will want to use stemming?(yes/no): ")
-    if usingStemming=='yes':
-        usingStemming=True
-        p.stemming=stemming
-    else:
-        usingStemming=False
+    usingStemming = input("You will want to use stemming?(yes/no): ")
+    if usingStemming == 'yes':
+        p.stemming = stemming
 
     # Iterate over every document in the file
-    for idx, document in enumerate(documents_list):
+    for idx, document in enumerate(documents_list, 1):
         # parse the document
         parsed_document = p.parse_doc(document)
         number_of_documents += 1
-        documents_list_afterParser.append(parsed_document)
 
-        # enter to temp entity dic
-        for entity in p.entity_temp:
-            if entity not in entity_dict_temp.keys():
-                entity_dict_temp[entity] = 1
-            else:
-                entity_dict_temp[entity] += 1
+        ####################### index the parses document data ##################################
+        indexer.parse = p
+         # to parse 1000 doc
 
-    ###################### For small/big Capital letters ##################################
-    for document in documents_list_afterParser:
-        for term in document.term_doc_dictionary:
-            if term not in term_dict.keys():
-                term_dict[term] = 1
-            else:
-                term_dict[term] += 1
+        indexer.add_new_doc(parsed_document)
 
-    for document in documents_list_afterParser:
-        for term in document.term_doc_dictionary.copy():
-            if isinstance(term, str):
-                try:
-                    if term[0].isupper():
-                        if term.lower() in term_dict:
-                            term1 = term.lower()
-                            document.term_doc_dictionary[term1] = document.term_doc_dictionary.pop(term)
-                            # del document.term_doc_dictionary[term]
-                        elif term.isupper():
-                            continue
-                        else:
-                            term2 = term.upper()
-                            document.term_doc_dictionary[term2] = document.term_doc_dictionary.pop(term)
-                            # del document.term_doc_dictionary[term]
-                except:
-                    print('as')
-    ########################################################################################
-
-    ###################### For entities ####################################################
-
-    for document in documents_list_afterParser:
-        for term in document.term_doc_dictionary.copy():
-            if term in entity_dict_temp:
-                if entity_dict_temp[term] > 1:
-                    continue
-                elif entity_dict_temp[term] == 1:
-                    del document.term_doc_dictionary[term]
-            else:
-                continue
-    ########################################################################################
-
-    ####################### index the parse document data ##################################
-
-    for count, document in enumerate(documents_list_afterParser, 1):  # to parse 1000 doc
-
-        indexer.add_new_doc(document)
-
-        if count % 10 == 0:
+        if idx % 10 == 0:
             # print('Finished parsing and indexing 1000 documents. Starting to export files')
             # print('Finished parsing and indexing. Starting to export files')
-
             AB_dict_posting = {}
-            dict_dictionary={}
-
-
+            dict_dictionary = {}
 
             for term in indexer.inverted_idx.keys():
                 if term not in dict_dictionary.keys():
@@ -131,30 +61,25 @@ def run_engine():
                     # Update inverted index and posting
                     if term[0] not in AB_dict_posting.keys():
                         AB_dict_posting[term[0]] = []
-                        # dict_dictionary[term]= []
-
 
                     AB_dict_posting[term[0]].append(indexer.posting_file[term])
                     indices = findInList(term, AB_dict_posting[term[0]])
-                    dict_dictionary[term]=(indexer.inverted_idx[term], 'posting_file['+term[0]+']['+str(indices)+']')
+                    dict_dictionary[term] = (indexer.inverted_idx[term], term[0], indices)
                     # test=1
                 except:
                     print("wrong")
 
             utils.save_obj(dict_dictionary, "inverted_idx")
             utils.save_obj(AB_dict_posting, "posting_file")
-            # utils.save_obj(indexer.inverted_idx, "inverted_idx")
 
     utils.save_obj(indexer.documents_info, "documents_info")
-    # dictest=utils.load_obj("inverted_idx_test")
-    # dictest=dictest[len(dictest)-1]
     test3 = 1
-
 
 
 def load_index():
     print('Load inverted index')
     inverted_index = utils.load_obj("inverted_idx")
+    inverted_index = inverted_index[0]
     return inverted_index
 
 

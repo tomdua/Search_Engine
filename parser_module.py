@@ -21,7 +21,7 @@ class Parse:
 
         for i in new_words:
             self.stop_words.append(i)
-        self.entity_temp = []
+        self.entity_temp = {}
         self.expandUrl = False
         self.stemming = None
 
@@ -136,7 +136,7 @@ class Parse:
             #######################################################
 
             ########## for some other words ######################
-            rx2 = re.compile(r"[-+]?\d*\w*\…|\w*[/]\w*\-?\d*|\w*\'\w*")
+            rx2 = re.compile(r"[-+]?\d*\w*\….?|\w*[/]\w*\-?\d*|\w*\'\w*")
             text8 = rx2.findall(text)
             if text8:
                 for w in text8:
@@ -174,14 +174,26 @@ class Parse:
             self.expandUrl = True
         # num = ' don't '
         # full_text = full_text + num
-
+        # s1 = 'Blue Berries'
+        # pattern = 'blue berries'
+        # for match in re.finditer(pattern, s1):
+        #     s = match.start()
+        #     e = match.end()
+        #     test1=0
+        'It would be terrible if this murderous bigot got a prolonged QT interval, I mean his risk for clots and ischemia is already way up now….Plaquenil has a pretty long half life too. Bottoms up, you fascist waste of space.'
         tokenized_text = self.parse_sentence(full_text)
         tokinzed_quote = self.parse_quotes(full_text)
         # if tokinzed_quote:
         #     test=1
         tokinzed_entity = self.get_continuous_chunks(full_text)
         tokinzed_entity_new = [e for e in tokinzed_entity if len(e.split()) > 1]
-        self.entity_temp = tokinzed_entity_new
+
+        # enter to temp entity dic
+        for entity in tokinzed_entity_new:
+            if entity not in self.entity_temp.keys():
+                self.entity_temp[entity] = 1
+            else:
+                self.entity_temp[entity] += 1
 
         tokenized_text = tokenized_text + tokinzed_quote + tokinzed_entity_new
 
