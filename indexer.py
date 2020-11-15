@@ -12,7 +12,7 @@ class Indexer:
 
         self.posting_file = {}
         self.config = config
-        self.document_info = {}
+        self.documents_info = {}
 
     def add_new_doc(self, document):
         """
@@ -56,7 +56,7 @@ class Indexer:
             if value == unique_num_value:
                 unique_num = unique_num + 1
 
-        self.document_info[document.tweet_id] = {'max_tf': max_tf, 'unique_instances': unique_num,
+        self.documents_info[document.tweet_id] = {'max_tf': max_tf, 'unique_instances': unique_num,
                                                  'tweet_length': document.doc_length}
 
     def find_words(self, test_str, test_sub):

@@ -8,7 +8,7 @@ def save_obj(obj, name):
     :param name: name of the pickle file.
     :return: -
     """
-    with open('./pickles/'+name+'.pkl', 'ab') as f:
+    with open('./pickles/'+name+'.pkl', 'wb') as f:
         pickle.dump(obj, f, pickle.HIGHEST_PROTOCOL)
 
 

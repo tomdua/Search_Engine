@@ -22,15 +22,20 @@ def run_engine():
     :return:
     """
     # AB_dict_test2 = utils.load_obj("posting_file")
-    # AB_posting=collections.OrderedDict(sorted(AB_dict_test2[len(AB_dict_test2)-1].items()))
+    # AB_dict_test2 = AB_dict_test2[len(AB_dict_test2) - 1]
+    #
     # dict=utils.load_obj("inverted_idx")
+    # dict = dict[len(dict) - 1]
+    #
+    # dictest = utils.load_obj("inverted_idx_test")
+    # dictest = dictest[len(dictest) - 1]
+
+
+
+    # AB_posting=collections.OrderedDict(sorted(AB_dict_test2[len(AB_dict_test2)-1].items()))
     # AB_dict_posting=collections.OrderedDict(sorted(dict[len(dict)-1].items()))
-    # test=AB_posting['#']
-    # def find(val, lis):
-    #     ind = [(j, i, k) for j, x in enumerate(lis) for i, y in enumerate(x) \
-    #            for k, z in enumerate(y) if z == val]
-    #     return ind[0][0] if ind else None
-    # indices = find('#1',AB_posting)
+
+
 
 
     config = ConfigClass()
@@ -113,34 +118,36 @@ def run_engine():
         if count % 10 == 0:
             # print('Finished parsing and indexing 1000 documents. Starting to export files')
             # print('Finished parsing and indexing. Starting to export files')
+
             AB_dict_posting = {}
-            AB_dict_dictionary = []
+            dict_dictionary={}
+
 
 
             for term in indexer.inverted_idx.keys():
-                AB_dict_dictionary[term] = []
+                if term not in dict_dictionary.keys():
+                    dict_dictionary[term] = []
                 try:
                     # Update inverted index and posting
                     if term[0] not in AB_dict_posting.keys():
                         AB_dict_posting[term[0]] = []
-                        # AB_dict_dictionary[term]= []
+                        # dict_dictionary[term]= []
+
 
                     AB_dict_posting[term[0]].append(indexer.posting_file[term])
+                    indices = findInList(term, AB_dict_posting[term[0]])
+                    dict_dictionary[term]=(indexer.inverted_idx[term], 'posting_file['+term[0]+']['+str(indices)+']')
+                    # test=1
                 except:
                     print("wrong")
 
-            #test1 = AB_dict_posting
-            # inverted_dict=indexer.inverted_idx
-            # test=AB_posting['#']
-
-
-            #indices = find('#1',test)
+            utils.save_obj(dict_dictionary, "inverted_idx")
             utils.save_obj(AB_dict_posting, "posting_file")
-            utils.save_obj(indexer.inverted_idx, "inverted_idx")
-            #AB_dict_test2 = utils.load_obj("AB_dict_posting")
-            #AB_dict_test2
+            # utils.save_obj(indexer.inverted_idx, "inverted_idx")
 
-    # dict=utils.load_obj("dictionary_Terms")
+    utils.save_obj(indexer.documents_info, "documents_info")
+    # dictest=utils.load_obj("inverted_idx_test")
+    # dictest=dictest[len(dictest)-1]
     test3 = 1
 
 
