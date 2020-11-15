@@ -17,7 +17,7 @@ class Parse:
         self.stop_words = stopwords.words('english')
         new_words = {"", "www", '', "https", "http", "^", "!", "?", "^", "&", "*", "#", "(", ")", ",", ";", ":", "{",
                      "}", "-", "[", "]", "<", ">", "|", "+", "`", "'", ".", "...", "..", "@", "’", "I", "“", "•",
-                     "️", "⬇", "'s", "``", "''", "”", "@:", "_","++.pls","....","......",".....","=","—"}
+                     "️", "⬇", "'s", "``", "''", "”", "@:", "_","++.pls","....","......",".....","=","—","status"}
 
         for i in new_words:
             self.stop_words.append(i)
@@ -136,16 +136,10 @@ class Parse:
             #######################################################
 
             ########## for some other words ######################
-            rx2 = re.compile(r"[-+]?\d*\w*\…|\w*\/|\w*\'\w*")
+            rx2 = re.compile(r"[-+]?\d*\w*\…|\w*[/]\w*\-?\d*|\w*\'\w*")
             text8 = rx2.findall(text)
             if text8:
                 for w in text8:
-                    # if '/' in w:
-                    #     w_new=w.replace("/", '', 1)
-                    #     text8.remove(w)
-                    #     text8.append(w_new)
-                    if "'" in w:
-                        text8.remove(w)
                     text = text.replace(w, '', 1)
             ################################################
 
@@ -178,18 +172,18 @@ class Parse:
         term_dict = {}
         if url:
             self.expandUrl = True
-        num = " Covid/covid-19 it's"
-        full_text = full_text + num
+        # num = ' don't '
+        # full_text = full_text + num
 
         tokenized_text = self.parse_sentence(full_text)
-        tokinzed_queae = self.parse_queae(full_text)
-        # if tokinzed_queae:
+        tokinzed_quote = self.parse_quotes(full_text)
+        # if tokinzed_quote:
         #     test=1
         tokinzed_entity = self.get_continuous_chunks(full_text)
         tokinzed_entity_new = [e for e in tokinzed_entity if len(e.split()) > 1]
         self.entity_temp = tokinzed_entity_new
 
-        tokenized_text = tokenized_text + tokinzed_queae + tokinzed_entity_new
+        tokenized_text = tokenized_text + tokinzed_quote + tokinzed_entity_new
 
         if self.expandUrl:
             tokinzed_url = self.parser_url(url)
@@ -220,8 +214,9 @@ class Parse:
         else:
             return str(num)
 
-    def parse_queae(self, text):
-        matches = re.findall(r'\"(.+?)\"', text)
+    def parse_quotes(self, text):
+        rx2 = re.compile(r'"(?:(?:(?!(?<!\\)").)*)"')
+        matches = rx2.findall(text)
         return matches
 
     def parse_mentions(self, text):
@@ -291,23 +286,3 @@ class Parse:
                 continue
         return continuous_chunk
 
-    # def parser_entity(self,text):
-    #     words = nltk.word_tokenize(text)
-    #     pos_tags = nltk.pos_tag(words)
-    #     chunks = nltk.ne_chunk(pos_tags, binary=False)  # either NE or not NE
-    #     entities = []
-    #     labels = []
-    #     mylist=[]
-    #     for chunk in chunks:
-    #         if hasattr(chunk, 'label'):
-    #             # print(chunk)
-    #             entities.append(' '.join(c[0] for c in chunk))
-    #             labels.append(chunk.label())
-    #
-    #     entities_labels = list(set(zip(entities, labels)))
-    #     entities_df = pd.DataFrame(entities_labels)
-    #     if len(entities_df) > 0 :
-    #         entities_df.columns = ["Entities", "Labels"]
-    #         mylist=list(dict.fromkeys(entities_df["Entities"]))
-    #
-    #     return mylist

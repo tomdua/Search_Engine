@@ -8,6 +8,8 @@ class Indexer:
 
     def __init__(self, config):
         self.inverted_idx = {}
+        # self.inverted_idx_temp = {}
+
         self.posting_file = {}
         self.config = config
         self.document_info = {}
@@ -28,20 +30,21 @@ class Indexer:
                 # Update inverted index and posting
                 if term not in self.inverted_idx.keys():
                     self.inverted_idx[term] = 1
+                    # self.inverted_idx_temp[term]= 1
                     self.posting_file[term] = []
-                    if document_dictionary[term] >= 2:
-                        index_in_twitter = self.find_words(document.full_text, term)
-                    else:
-                        index_in_twitter = document.full_text.find(term)
+                    # if document_dictionary[term] >= 2:
+                    #     index_in_twitter = self.find_words(document.full_text, term)
+                    # else:
+                    #     index_in_twitter = document.full_text.find(term)
                 else:
                     self.inverted_idx[term] += 1
-                    if document_dictionary[term] >= 2:
-                        index_in_twitter = self.find_words(document.full_text, term)
-                    else:
-                        index_in_twitter = document.full_text.find(term)
+                    # if document_dictionary[term] >= 2:
+                    #     index_in_twitter = self.find_words(document.full_text, term)
+                    # else:
+                    #     index_in_twitter = document.full_text.find(term)
 
 
-                self.posting_file[term].append((term, document.tweet_id, document_dictionary[term],index_in_twitter))
+                self.posting_file[term].append((term, document.tweet_id, document_dictionary[term]))
 
             except:
                 print('problem with the following key {}'.format(term[0]))
@@ -53,7 +56,7 @@ class Indexer:
             if value == unique_num_value:
                 unique_num = unique_num + 1
 
-        self.document_info[document.tweet_id] = {'max_tf': max_tf, 'unique_num': unique_num,
+        self.document_info[document.tweet_id] = {'max_tf': max_tf, 'unique_instances': unique_num,
                                                  'tweet_length': document.doc_length}
 
     def find_words(self, test_str, test_sub):
