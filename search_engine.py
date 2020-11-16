@@ -1,3 +1,5 @@
+import collections
+
 from reader import ReadFile
 from configuration import ConfigClass
 from parser_module import Parse
@@ -5,7 +7,6 @@ from stemmer import Stemmer
 from indexer import Indexer
 from searcher import Searcher
 import utils
-
 
 def findInList(val, lis):
     ind = [(j, i, k) for j, x in enumerate(lis) for i, y in enumerate(x) \
@@ -18,12 +19,15 @@ def run_engine():
     :return:
     """
 
-    # posting_file = utils.load_obj("posting_file")
-    # posting_file=posting_file[0]
-    #
-    # inverted_idx=utils.load_obj("inverted_idx")
-    # inverted_idx=inverted_idx[0]
+    posting_file = utils.load_obj("posting_file")
+    posting_file=posting_file[0]
 
+    inverted_idx=utils.load_obj("inverted_idx")
+    inverted_idx=inverted_idx[0]
+
+    # inverted_idx = utils.load_obj("documents_info")
+    # documents_info = documents_info[1]
+    # #
 
     config = ConfigClass()
     r = ReadFile(corpus_path=config.get__corpusPath())

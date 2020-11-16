@@ -1,4 +1,7 @@
+from statistics import mode
 import collections
+
+import utils
 
 
 class Indexer:
@@ -18,20 +21,15 @@ class Indexer:
         :return: -
         """
 
-
         document_dictionary = document.term_doc_dictionary
         # Go over each term in the doc
         for term in document_dictionary.copy():
             try:
-                first = False
-                #### for entities ######
-                if term in self.parse.entity_temp:
-                    if self.parse.entity_temp[term] == 1:
+                first= False
+                if term in self.parse.entity_temp :
+                    if self.parse.entity_temp[term] == 1 :
                         del document.term_doc_dictionary[term]
                         continue
-
-                # else:
-                #     continue
                 # Update inverted index and posting
                 if term not in self.inverted_idx.keys():
                     self.inverted_idx[term] = 1
@@ -58,11 +56,12 @@ class Indexer:
                             self.posting_file[term2] = self.posting_file.pop(term)
                             document.term_doc_dictionary[term2] = document.term_doc_dictionary.pop(term)
                             term = term2
+
+
                             # document.term_doc_dictionary[term2] = document.term_doc_dictionary.pop(term)
                             # del document.term_doc_dictionary[term]
-
-                self.posting_file[term].append((term, document.tweet_id, document_dictionary[term]))
-
+                doc_pos_term=document.doc_pos.get(term.lower())
+                self.posting_file[term].append((term, document.tweet_id, document_dictionary[term],doc_pos_term))
             except:
                 print('problem with the following key {}'.format(term[0]))
 
@@ -75,7 +74,3 @@ class Indexer:
 
         self.documents_info[document.tweet_id] = {'max_tf': max_tf, 'unique_instances': unique_num,
                                                   'tweet_length': document.doc_length}
-
-    def find_words(self, test_str, test_sub):
-        res = [i for i in range(len(test_str)) if test_str.startswith(test_sub, i)]
-        return res

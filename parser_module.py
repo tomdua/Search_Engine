@@ -11,15 +11,33 @@ from document import Document
 from nltk.tree import Tree
 
 
-class Parse:
+def find_postion_2_indexs(test_str, test_sub):
+    if test_str.find(test_sub) != -1:
+        res = [i for i in range(len(test_str)) if test_str.startswith(test_sub, i)]
+    elif test_str.find(test_sub.upper()) != -1:
+        res = test_str.find(test_sub.upper())
+    else :
+        res = test_str.find(test_sub.title())
+    return res
 
+
+def find_postion(full_text, term):
+    if full_text.find(term) != -1:
+        index = full_text.find(term)
+    elif full_text.find(term.upper()) != -1:
+        index = full_text.find(term.upper())
+    else:
+        index = full_text.find(term.title())
+    return index
+
+class Parse:
     def __init__(self):
         self.stop_words = stopwords.words('english')
-        new_words = {"", "www", '', "https", "http", "^", "!", "?", "^", "&", "*", "#", "(", ")", ",", ";", ":", "{",
+        new_stop_words = {"%","status","twitter.com","", "www", '', "https", "http", "^", "!", "?", "^", "&", "*", "#", "(", ")", ",", ";", ":", "{",
                      "}", "-", "[", "]", "<", ">", "|", "+", "`", "'", ".", "...", "..", "@", "’", "I", "“", "•",
                      "️", "⬇", "'s", "``", "''", "”", "@:", "_","++.pls","....","......",".....","=","—","status","instagram.com","twitter.com","t.co"}
 
-        for i in new_words:
+        for i in new_stop_words:
             self.stop_words.append(i)
         self.entity_temp = {}
         self.expandUrl = False
@@ -122,7 +140,8 @@ class Parse:
             # text4_correct = []
             if tokinzed_hatags:
                 for w in tokinzed_hatags:
-                    text = text.replace(w, '', 1)
+                    if w[0] is'#':
+                        text = text.replace(w, '', 1)
             #######################################################
 
             #################### mentions #########################
@@ -196,26 +215,46 @@ class Parse:
                 self.entity_temp[entity] += 1
 
         tokenized_text = tokenized_text + tokinzed_quote + tokinzed_entity_new
-
+        doc_pos = {}
+        list=[]
         if self.expandUrl:
             tokinzed_url = self.parser_url(url)
             tokenized_text = tokenized_text + tokinzed_url
+            # for term in tokinzed_url:
+            #     doc_pos[term] = {3, url.find(term)}
+            #     # list.append(term)
+            #     tokenized_text.remove(term)
 
+        ################################################################
+
+        ########## insert the word postion and tf ######################
         doc_length = len(full_text)
         for term in tokenized_text:
-            if term not in term_dict.keys():
-                term_dict[term] = 1
+            if term in tokinzed_url:
+                doc_pos[term] = {3: {url.find(term)}}
             else:
-                term_dict[term] += 1
+                if term not in term_dict.keys():
+                    term_dict[term] = 1
+                    doc_pos[term.lower()] = {2:find_postion(full_text,term)}
 
+                else:
+                    term_dict[term] += 1
+                    res = find_postion_2_indexs(full_text , term)
+                    doc_pos[term.lower()] = {2:res}
+
+        # tokenized_text.append()
         document = Document(tweet_id, tweet_date, full_text, url, retweet_text, retweet_url, quote_text,
-                            quote_url, term_dict, doc_length)
+                            quote_url, term_dict, doc_length,doc_pos)
         # self.tempDocuments=self.tempDocuments+document
         return document
 
     ############ private func ##############################
 
     def change_format(self, num):
+        """
+        :param: int/float - number
+        :return: string- number
+        """
         if num > 999:
             magnitude = 0
             while abs(num) >= 1000:
@@ -227,59 +266,72 @@ class Parse:
             return str(num)
 
     def parse_quotes(self, text):
+        """
+        :param text: a full text from the twitter.
+        :return: quotes terms.
+        'The best beer in the world'
+        """
         rx2 = re.compile(r'"(?:(?:(?!(?<!\\)").)*)"')
         matches = rx2.findall(text)
         return matches
 
     def parse_mentions(self, text):
+        """
+        :param text: a full text from the twitter.
+        :return: mentions terms split from the text.
+        @stayAtHome - @stayAtHome
+        """
         mentions_trem = []
-        tokenize = word_tokenize(text)
-        for i in range(len(tokenize) - 1):
-            if tokenize[i] is '@':
-                mentions_trem.append('@' + tokenize[i + 1])
+        # tokenize = word_tokenize(text)
+        mentions_trem=re.findall(r'(@+[0-9|a-z|A-Z]*)', text)
+        # for i in range(len(tokenize) - 1):
+        #     if tokenize[i] is '@':
+        #         mentions_trem.append('@' + tokenize[i + 1])
+
         return mentions_trem
 
+
     def parse_hashtag(self, text):
-        hashtags = []
+        """
+        :param text: a full text from the twitter.
+        :return: hashtags terms split from the text.
+        #stayAtHome - stay, at, home, #stayathome
+        """
         hashtags_trem = []
-        patterns = '([A-Z][a-z]+)'
-        tokenize = word_tokenize(text)
-        for i in range(len(tokenize) - 1):
-            to = tokenize[i]
-            if tokenize[i] is '#':
-                word = tokenize[i + 1]
-                hashtags.append(word)
-
-        for i in range(len(hashtags)):
-            hashtags_trem.append(('#' + hashtags[i].lower()))
-
-        for token in range(len(hashtags)):
-            if '_' in hashtags[token]:
-                split = hashtags[token].split('_')
-                hashtags_trem.extend(word.lower() for word in split)
-
-            else:
-                split = re.sub(patterns, r' \1', re.sub('([A-Z]+)', r' \1', hashtags[token])).split()
-                hashtags_trem.extend(word.lower() for word in split)
-
+        tag=re.findall(r'(#+[0-9|a-z|A-Z]*)', text)
+        if tag.__len__() >= 1:
+            for term in tag:
+                hashtags_trem.append(term[0] + term[1:].lower())
+                if '_' in tag:
+                    split = tag.split('_')
+                    hashtags_trem.extend(word.lower() for word in split)
+                else:
+                    split = re.sub('([A-Z][a-z]+)', r' \1', re.sub('([A-Z]+)', r' \1', term[1:])).split()
+                    hashtags_trem.extend(word.lower() for word in split)
         return hashtags_trem
 
-    """
-    split and fix the terms in url
-    @param terms array, temp array that insert all the word_tokenize excepet few sign
-    @param tokenize
-    @return array of terms from the url
-    """
 
     def parser_url(self, url):
-        terms = []
-        tokenize = word_tokenize(url)
+        """
+        :param url: a url from twitter.
+        :return: url split according to the url laws.
+        #https://www.instagram.com/p/CD7fAPWs3WM/?igshid=o9kf0ugp1l8x - https, www, instagram.com, p, CD7fAPWs3WM, igshid, o9kf0ugp1l8x
+        """
+        url_parse=[]
+        if len(url)>2:
+            # tokenize = word_tokenize(url)
+            # i=0
+            # for token in range(len(tokenize)):
+            #     new_token = re.split('[/\=:#?]', tokenize[token])
+            #     if new_token[i] not in self.stop_words:
+            #         terms.extend(new_token)
+            #     i=i+1
+            terms = re.split('[/://?=]' , url)
+            url_parse = [w for w in terms if w not in self.stop_words]
+        # url_parse = [w for w in terms if w not in self.stop_words]
 
-        for token in range(len(tokenize)):
-            new_token = re.split('[/\=:#?]', tokenize[token])
-            terms.extend(new_token)
-        url_parse = [w for w in terms if w not in self.stop_words]
-
+        # terms = re.findall('https?://(?:[-\w.]|(?:%[\da-fA-F]{2}))+', url)
+        # url_parse = [w for w in terms if w not in self.stop_words]
         return url_parse
 
     def get_continuous_chunks(self, text):
@@ -297,4 +349,3 @@ class Parse:
             else:
                 continue
         return continuous_chunk
-
