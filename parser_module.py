@@ -11,30 +11,34 @@ from document import Document
 from nltk.tree import Tree
 
 
-def find_postion_2_indexs(test_str, test_sub):
-    if test_str.find(test_sub) != -1:
-        res = [i for i in range(len(test_str)) if test_str.startswith(test_sub, i)]
-    elif test_str.find(test_sub.upper()) != -1:
-        res = test_str.find(test_sub.upper())
-    else :
-        res = test_str.find(test_sub.title())
-    return res
+# def find_postion_2_indexs(test_str, test_sub):
+#     if test_str.find(test_sub) != -1:
+#         res = [i for i in range(len(test_str)) if test_str.startswith(test_sub, i)]
+#     elif test_str.find(test_sub.upper()) != -1:
+#         res = test_str.find(test_sub.upper())
+#     else :
+#         res = test_str.find(test_sub.title())
+#     return res
 
 
-def find_postion(full_text, term):
-    if full_text.find(term) != -1:
-        index = full_text.find(term)
-    elif full_text.find(term.upper()) != -1:
-        index = full_text.find(term.upper())
+def find_postion(full_text, term, more_than_one):
+    if more_than_one is True:
+        index = [i for i in range(len(full_text)) if full_text.startswith(term , i)]
     else:
-        index = full_text.find(term.title())
+        if full_text.find(term) != -1:
+            index = full_text.find(term)
+        elif full_text.find(term.upper()) != -1:
+            index = full_text.find(term.upper())
+        else:
+            index = full_text.find(term.title())
+
     return index
 
 class Parse:
     def __init__(self):
         self.stop_words = stopwords.words('english')
         new_stop_words = {"%","status","twitter.com","", "www", '', "https", "http", "^", "!", "?", "^", "&", "*", "#", "(", ")", ",", ";", ":", "{",
-                     "}", "-", "[", "]", "<", ">", "|", "+", "`", "'", ".", "...", "..", "@", "’", "I", "“", "•",
+                     "}","_", "-", "[", "]", "<", ">", "|", "+", "`", "'", ".", "...", "..", "@", "’", "I", "“", "•",
                      "️", "⬇", "'s", "``", "''", "”", "@:", "_","++.pls","....","......",".....","=","—","status","instagram.com","twitter.com","t.co"}
 
         for i in new_stop_words:
@@ -216,7 +220,6 @@ class Parse:
 
         tokenized_text = tokenized_text + tokinzed_quote + tokinzed_entity_new
         doc_pos = {}
-        list=[]
         if self.expandUrl:
             tokinzed_url = self.parser_url(url)
             tokenized_text = tokenized_text + tokinzed_url
@@ -231,16 +234,21 @@ class Parse:
         doc_length = len(full_text)
         for term in tokenized_text:
             if term in tokinzed_url:
-                doc_pos[term] = {3: {url.find(term)}}
+                if term not in term_dict.keys():
+                    term_dict[term] = 1
+                    doc_pos[term.lower()] = {3: find_postion(url,term,False)}
+                else:
+                    term_dict[term] += 1
+                    doc_pos[term.lower()] = {3: find_postion(url,term,True)}
+
             else:
                 if term not in term_dict.keys():
                     term_dict[term] = 1
-                    doc_pos[term.lower()] = {2:find_postion(full_text,term)}
+                    doc_pos[term.lower()] = {2:find_postion(full_text,term, False)}
 
                 else:
                     term_dict[term] += 1
-                    res = find_postion_2_indexs(full_text , term)
-                    doc_pos[term.lower()] = {2:res}
+                    doc_pos[term.lower()] = {2:find_postion(full_text , term, True)}
 
         # tokenized_text.append()
         document = Document(tweet_id, tweet_date, full_text, url, retweet_text, retweet_url, quote_text,
@@ -302,12 +310,14 @@ class Parse:
         if tag.__len__() >= 1:
             for term in tag:
                 hashtags_trem.append(term[0] + term[1:].lower())
-                if '_' in tag:
-                    split = tag.split('_')
-                    hashtags_trem.extend(word.lower() for word in split)
-                else:
-                    split = re.sub('([A-Z][a-z]+)', r' \1', re.sub('([A-Z]+)', r' \1', term[1:])).split()
-                    hashtags_trem.extend(word.lower() for word in split)
+                # if '_' in tag:
+                #     split = tag.split('_')
+                #     hashtags_trem.extend(word.lower() for word in split)
+                # else:
+                #     split = re.sub('([A-Z][a-z]+)', r' \1', re.sub('([A-Z]+)', r' \1', term[1:])).split()
+                #     hashtags_trem.extend(word.lower() for word in split)
+                hashtags_trem.extend(([t.lower() for t in re.split(r'([A-Z]*[a-z]*)', term.split("#")[1]) if t]))
+
         return hashtags_trem
 
 
@@ -326,7 +336,7 @@ class Parse:
             #     if new_token[i] not in self.stop_words:
             #         terms.extend(new_token)
             #     i=i+1
-            terms = re.split('[/://?=]' , url)
+            terms = re.split('[/://?={"]' , url)
             url_parse = [w for w in terms if w not in self.stop_words]
         # url_parse = [w for w in terms if w not in self.stop_words]
 
