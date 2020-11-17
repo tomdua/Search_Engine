@@ -60,22 +60,25 @@ class Indexer:
                             term = term2
                             # document.term_doc_dictionary[term2] = document.term_doc_dictionary.pop(term)
                             # del document.term_doc_dictionary[term]
-
-                self.posting_file[term].append((term, document.tweet_id, document_dictionary[term]))
+                doc_pos_term=document.doc_pos.get(term.lower())
+                self.posting_file[term].append((term, document.tweet_id, document_dictionary[term],doc_pos_term))
 
             except:
                 print('problem with the following key {}'.format(term[0]))
+        try:
+            max_tf = document_dictionary[max(document_dictionary, key=document_dictionary.get)]
+            unique_num_value = collections.Counter(document_dictionary.values()).most_common()[-1][0]
+            unique_num = 0
 
-        max_tf = document_dictionary[max(document_dictionary, key=document_dictionary.get)]
-        unique_num_value = collections.Counter(document_dictionary.values()).most_common()[-1][0]
-        unique_num = 0
-        for key, value in document_dictionary.items():
-            if value == unique_num_value:
-                unique_num = unique_num + 1
+            for key, value in document_dictionary.items():
+                if value == unique_num_value:
+                    unique_num = unique_num + 1
 
-        self.documents_info[document.tweet_id] = {'max_tf': max_tf, 'unique_instances': unique_num,
-                                                  'tweet_length': document.doc_length}
+            self.documents_info[document.tweet_id] = {'max_tf': max_tf, 'unique_instances': unique_num,
+                                                      'tweet_length': document.doc_length}
+        except:
+            print('problem with {}'.format(document_dictionary))
 
-    def find_words(self, test_str, test_sub):
-        res = [i for i in range(len(test_str)) if test_str.startswith(test_sub, i)]
-        return res
+    # def find_words(self, test_str, test_sub):
+    #     res = [i for i in range(len(test_str)) if test_str.startswith(test_sub, i)]
+    #     return res

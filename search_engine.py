@@ -1,3 +1,5 @@
+import json
+
 from reader import ReadFile
 from configuration import ConfigClass
 from parser_module import Parse
@@ -5,6 +7,7 @@ from stemmer import Stemmer
 from indexer import Indexer
 from searcher import Searcher
 import utils
+import time
 
 
 def findInList(val, lis):
@@ -18,11 +21,12 @@ def run_engine():
     :return:
     """
 
-    # posting_file = utils.load_obj("posting_file")
-    # posting_file=posting_file[0]
-    #
-    # inverted_idx=utils.load_obj("inverted_idx")
-    # inverted_idx=inverted_idx[0]
+    # with open('inverted_idx.txt') as json_file:
+    #     inverted_idx = json.load(json_file)
+    # with open('posting_file.txt') as json_file:
+    #     posting_file = json.load(json_file)
+    # with open('documents_info.txt') as json_file:
+    #     documents_info = json.load(json_file)
 
 
     config = ConfigClass()
@@ -32,10 +36,12 @@ def run_engine():
     indexer = Indexer(config)
     documents_list = r.read_file()
     number_of_documents = 0
-    usingStemming = input("You will want to use stemming?(yes/no): ")
-    if usingStemming == 'yes':
-        p.stemming = stemming
-
+    # usingStemming = input("You will want to use stemming?(yes/no): ")
+    # if usingStemming == 'yes':
+    #     p.stemming = stemming
+    # import time
+    start_time = time.time()
+    # print("--- %s seconds ---" % start_time)
     # Iterate over every document in the file
     for idx, document in enumerate(documents_list, 1):
         # parse the document
@@ -48,7 +54,7 @@ def run_engine():
 
         indexer.add_new_doc(parsed_document)
 
-        if idx % 10 == 0:
+        if idx % 20 == 0:
             # print('Finished parsing and indexing 1000 documents. Starting to export files')
             # print('Finished parsing and indexing. Starting to export files')
             AB_dict_posting = {}
@@ -69,10 +75,21 @@ def run_engine():
                 except:
                     print("wrong")
 
-            utils.save_obj(dict_dictionary, "inverted_idx")
-            utils.save_obj(AB_dict_posting, "posting_file")
+            # f = open("dict.txt", "w")
+            # f.write(str(dict_dictionary))
+            # f.close()
+            with open('inverted_idx.txt', 'w') as file:
+                file.write(json.dumps(dict_dictionary))
+            with open('posting_file.txt', 'w') as file:
+                file.write(json.dumps(AB_dict_posting))
+            # utils.save_obj(dict_dictionary, "inverted_idx")
+            # utils.save_obj(AB_dict_posting, "posting_file")
 
-    utils.save_obj(indexer.documents_info, "documents_info")
+    # my_data_file = open('file.txt', 'r')
+    with open('documents_info.txt', 'w') as file:
+        file.write(json.dumps(indexer.documents_info))
+    # utils.save_obj(indexer.documents_info, "documents_info")
+    print("--- %s seconds ---" % (time.time() - start_time))
     test3 = 1
 
 
