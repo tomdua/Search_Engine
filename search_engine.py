@@ -23,12 +23,12 @@ def run_engine():
     :return:
     """
 
-    with open('inverted_idx.txt') as json_file:
-        inverted_idx = json.load(json_file)
-    with open('posting_file.txt') as json_file:
-        posting_file = json.load(json_file)
-    with open('documents_info.txt') as json_file:
-        documents_info = json.load(json_file)
+    # with open('inverted_idx.txt') as json_file:
+    #     inverted_idx = json.load(json_file)
+    # with open('posting_file.txt') as json_file:
+    #     posting_file = json.load(json_file)
+    # with open('documents_info.txt') as json_file:
+    #     documents_info = json.load(json_file)
 
 
     config = ConfigClass()
@@ -43,20 +43,25 @@ def run_engine():
     #     p.stemming = stemming
     # import time
     start_time = time.time()
+    # x=len(documents_list)
     # print("--- %s seconds ---" % start_time)
     # Iterate over every document in the file
     for idx, document in enumerate(documents_list, 1):
         # parse the document
         parsed_document = p.parse_doc(document)
-        number_of_documents += 1
+        #number_of_documents += 1
 
         ####################### index the parses document data ##################################
         indexer.parse = p
          # to parse 1000 doc
 
         indexer.add_new_doc(parsed_document)
+        print(idx)
+        print("--- %s seconds in---" % (time.time() - start_time))
 
-        if idx % 20 == 0:
+        if idx % 20000 == 0 or idx == len(documents_list):
+            print("--- %s seconds out---" % (time.time() - start_time))
+
             # print('Finished parsing and indexing 1000 documents. Starting to export files')
             # print('Finished parsing and indexing. Starting to export files')
             # AB_dict_posting = {}
@@ -80,16 +85,18 @@ def run_engine():
             # f = open("dict.txt", "w")
             # f.write(str(dict_dictionary))
             # f.close()
-            with open('inverted_idx.txt', 'w') as file:
+            with open('inverted_idx1.txt', 'w') as file:
                 file.write(json.dumps(indexer.dict_dictionary))
-            with open('posting_file.txt', 'w') as file:
+            with open('posting_file1.txt', 'w') as file:
                 file.write(json.dumps(indexer.AB_dict_posting))
+            with open('documents_info.txt1', 'w') as file:
+                file.write(json.dumps(indexer.documents_info))
             # utils.save_obj(dict_dictionary, "inverted_idx")
             # utils.save_obj(AB_dict_posting, "posting_file")
 
     # my_data_file = open('file.txt', 'r')
-    with open('documents_info.txt', 'w') as file:
-        file.write(json.dumps(indexer.documents_info))
+    # with open('documents_info.txt1', 'w') as file:
+    #     file.write(json.dumps(indexer.documents_info))
     # utils.save_obj(indexer.documents_info, "documents_info")
     print("--- %s seconds ---" % (time.time() - start_time))
     test3 = 1

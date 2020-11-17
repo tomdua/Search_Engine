@@ -35,6 +35,7 @@ class Parse:
         """
 
         if text:
+            text_tokens=[]
             try:
                 if '%' in text or 'percent' in text or 'percentage' in text or 'percentage' in text or 'Thousand' in text or 'Million' in text or 'Billion' in text:
                     if 'percentage' in text:
@@ -82,6 +83,7 @@ class Parse:
                 rx2 = re.compile(r"[-+]?\d+\,+\d+\,*\d+\,*\d+")
                 text2 = rx2.findall(text)
                 if text2:
+                    text2=[w for w in text2 if len(w)<16]
                     text = rx2.sub("", text)
                     text2 = [self.change_format(int(w.replace(',', ''))) for w in text2]
                 #########################################################################
@@ -167,7 +169,8 @@ class Parse:
 
         if url:
             self.expandUrl = True
-        line = " "
+        line = " Call for work from home  https://t.co/fKiS5W3w2o"
+
         full_text = full_text + line
         tokenized_text = self.parse_sentence(full_text)
         tokinzed_quote = self.parse_quotes(full_text)
@@ -225,7 +228,7 @@ class Parse:
         :param: int/float - number
         :return: string- number
         """
-        if num > 999:
+        if num > 999 and len(num)<11:
             magnitude = 0
             while abs(num) >= 1000:
                 magnitude += 1

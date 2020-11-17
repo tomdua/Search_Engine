@@ -23,6 +23,8 @@ class Searcher:
         """
         with open('posting_file.txt') as json_file:
             posting_file = json.load(json_file)
+        self.ranker.posting_file=posting_file
+        self.ranker.inverted_idx= self.inverted_index
         relevant_docs = {}
         for term in query:
             try: # an example of checks that you have to do

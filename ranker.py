@@ -1,16 +1,29 @@
-from numpy import asarray
+import json
+
+from numpy import asarray, zeros
 
 
 class Ranker:
     def __init__(self):
-        self.posting_file=None
-        pass
+        self.posting_file= {}
+        self.inverted_idx= {}
+        #pass
 
-    @staticmethod
-    def rank_relevant_doc(relevant_doc):
+    #@staticmethod
+    def rank_relevant_doc(self,relevant_doc):
+        # corpus= []
+        full_text_array= []
+
+        with open('documents_info.txt') as json_file:
+            documents_info = json.load(json_file)
+
+        # # longest_sentence
+        # for id in relevant_doc:
+        #     max_lengh(documents_info[id])
+        #
+        # unique_words =len(self.inverted_idx)
 
 
-        corpus= []
 
 
 
@@ -34,7 +47,11 @@ class Ranker:
 
         glove_file.close()
 
-
+        embedding_matrix = zeros((len(self.inverted_idx), 100))
+        for word, index in self.inverted_idx.word_index.items():
+            embedding_vector = embeddings_dictionary.get(word)
+            if embedding_vector is not None:
+                embedding_matrix[index] = embedding_vector
 
 
 
@@ -50,8 +67,8 @@ class Ranker:
         """
         return sorted(relevant_doc.items(), key=lambda item: item[1], reverse=True)
 
-    @staticmethod
-    def retrieve_top_k(sorted_relevant_doc, k=1):
+    #@staticmethod
+    def retrieve_top_k(self,sorted_relevant_doc, k=1):
         """
         return a list of top K tweets based on their ranking from highest to lowest
         :param sorted_relevant_doc: list of all candidates docs.
