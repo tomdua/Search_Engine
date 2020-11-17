@@ -118,6 +118,7 @@ class Parse:
             # test=[w for w in text if any(c for c in w if unicodedata.category(c) == 'So')]
 
             #################### parse emoji #########################
+            text6=[]
             # rx2 = re.compile(r'[^\w\s,]')
             text5 = [w for w in text if any(c for c in w if unicodedata.category(c) == 'So')]
             try:
@@ -144,7 +145,7 @@ class Parse:
             # text4_correct = []
             if tokinzed_hatags:
                 for w in tokinzed_hatags:
-                    if w[0] is'#':
+                    if w[0] is '#':
                         text = text.replace(w, '', 1)
             #######################################################
 
@@ -208,8 +209,9 @@ class Parse:
         tokinzed_quote = self.parse_quotes(full_text)
         # if tokinzed_quote:
         #     test=1
-        tokinzed_entity = self.get_continuous_chunks(full_text)
-        tokinzed_entity_new = [e for e in tokinzed_entity if len(e.split()) > 1]
+        tokinzed_entity_new = self.get_continuous_chunks(full_text)
+
+        #tokinzed_entity_new = [e for e in tokinzed_entity if len(e.split()) > 1]
 
         # enter to temp entity dic
         for entity in tokinzed_entity_new:
@@ -291,7 +293,7 @@ class Parse:
         """
         mentions_trem = []
         # tokenize = word_tokenize(text)
-        mentions_trem=re.findall(r'(@+[0-9|a-z|A-Z]*)', text)
+        mentions_trem=re.findall(r'(@+\w*)', text)
         # for i in range(len(tokenize) - 1):
         #     if tokenize[i] is '@':
         #         mentions_trem.append('@' + tokenize[i + 1])
@@ -305,19 +307,14 @@ class Parse:
         :return: hashtags terms split from the text.
         #stayAtHome - stay, at, home, #stayathome
         """
+        #text='#tom_matan'
+        # text= "#TomMatanNoy dfsafasdfasfds #rrerretre trotro #Almog_Rotam_ew"
         hashtags_trem = []
-        tag=re.findall(r'(#+[0-9|a-z|A-Z]*)', text)
+        tag=re.findall(r'(#+\w*)', text)
         if tag.__len__() >= 1:
             for term in tag:
                 hashtags_trem.append(term[0] + term[1:].lower())
-                # if '_' in tag:
-                #     split = tag.split('_')
-                #     hashtags_trem.extend(word.lower() for word in split)
-                # else:
-                #     split = re.sub('([A-Z][a-z]+)', r' \1', re.sub('([A-Z]+)', r' \1', term[1:])).split()
-                #     hashtags_trem.extend(word.lower() for word in split)
-                hashtags_trem.extend(([t.lower() for t in re.split(r'([A-Z]*[a-z]*)', term.split("#")[1]) if t]))
-
+                hashtags_trem += [w.lower() for w in re.findall('[a-z|A-Z][^A-Z|_]*', term)]
         return hashtags_trem
 
 
@@ -336,7 +333,7 @@ class Parse:
             #     if new_token[i] not in self.stop_words:
             #         terms.extend(new_token)
             #     i=i+1
-            terms = re.split('[/://?={"]' , url)
+            terms = re.split('[\[/:"//?={"\]]' , url)
             url_parse = [w for w in terms if w not in self.stop_words]
         # url_parse = [w for w in terms if w not in self.stop_words]
 
@@ -345,17 +342,53 @@ class Parse:
         return url_parse
 
     def get_continuous_chunks(self, text):
-        chunked = ne_chunk(pos_tag(word_tokenize(text)))
-        continuous_chunk = []
-        current_chunk = []
-        for i in chunked:
-            if type(i) == Tree:
-                current_chunk.append(" ".join([token for token, pos in i.leaves()]))
-            if current_chunk:
-                named_entity = " ".join(current_chunk)
-                if named_entity not in continuous_chunk:
-                    continuous_chunk.append(named_entity)
-                    current_chunk = []
-            else:
-                continue
-        return continuous_chunk
+        """
+            :param url: a full text from the twitter.
+            :return: url the all entity
+        """
+        #
+        # text = ("Madonna has a new album\n"
+        #             "Paul Young has no new album\n"
+        #             "Emmerson Lake-palmar is not here\n"
+        #             "Emmerson Lake-Palmer-Tom is not here\n"
+        #             "Emmerson Lake-Palmer Tom Matan Th this \n"
+        #             "The Matan Duany\n"
+        #             "Do you TOm Duany Matan gal \n")
+
+        # list=[]
+        # regex = r"[A-Z][-a-zA-Z]*(?:\s+[A-Z][-a-zA-Z]*)*((?:[A-Z][a-z]*))*"
+        # matches = re.finditer(regex , text)
+        # for matchNum , match in enumerate(matches , start=1) :
+        #     if len(match[0].split())>1:
+        #         list.append(match[0])
+        #
+        # list
+        # text='Tom Duany fsafsafssd Tom Matan Duany'
+        # rx2 = re.compile(regex)
+        # tomy = re.findall((r'[A-Z][-a-zA-Z](?:\s+[A-Z][-a-zA-Z])'),text)
+        # tom = rx2.findall(text)
+
+
+
+        rx2 = re.compile(r'[A-Z][-a-zA-Z]*(?:\s+[A-Z][-a-zA-Z]*)*')
+        matches = rx2.findall(text)
+        tokinzed_entity_new = [e for e in matches if len(e.split()) > 1]
+
+        return tokinzed_entity_new
+
+
+        #
+        # chunked = ne_chunk(pos_tag(word_tokenize(text)))
+        # continuous_chunk = []
+        # current_chunk = []
+        # for i in chunked:
+        #     if type(i) == Tree:
+        #         current_chunk.append(" ".join([token for token, pos in i.leaves()]))
+        #     if current_chunk:
+        #         named_entity = " ".join(current_chunk)
+        #         if named_entity not in continuous_chunk:
+        #             continuous_chunk.append(named_entity)
+        #             current_chunk = []
+        #     else:
+        #         continue
+        # return continuous_chunk

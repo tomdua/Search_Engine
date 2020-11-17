@@ -9,3 +9,6 @@ run.bat
 run.sh
 sample3.parquet
 pickles
+documents_info.txt
+inverted_idx.txt
+posting_file.txt

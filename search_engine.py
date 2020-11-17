@@ -1,4 +1,5 @@
 import collections
+import json
 
 from reader import ReadFile
 from configuration import ConfigClass
@@ -19,15 +20,12 @@ def run_engine():
     :return:
     """
 
-    posting_file = utils.load_obj("posting_file")
-    posting_file=posting_file[0]
-
-    inverted_idx=utils.load_obj("inverted_idx")
-    inverted_idx=inverted_idx[0]
-
-    # inverted_idx = utils.load_obj("documents_info")
-    # documents_info = documents_info[1]
-    # #
+    # with open('inverted_idx.txt') as json_file:
+    #     inverted_idx = json.load(json_file)
+    # with open('posting_file.txt') as json_file:
+    #     posting_file = json.load(json_file)
+    # with open('documents_info.txt') as json_file:
+    #     documents_info = json.load(json_file)
 
     config = ConfigClass()
     r = ReadFile(corpus_path=config.get__corpusPath())
@@ -39,6 +37,9 @@ def run_engine():
     usingStemming = input("You will want to use stemming?(yes/no): ")
     if usingStemming == 'yes':
         p.stemming = stemming
+
+    import time
+    start_time = time.time()
 
     # Iterate over every document in the file
     for idx, document in enumerate(documents_list, 1):
@@ -52,7 +53,7 @@ def run_engine():
 
         indexer.add_new_doc(parsed_document)
 
-        if idx % 10 == 0:
+        if idx % 20 == 0:
             # print('Finished parsing and indexing 1000 documents. Starting to export files')
             # print('Finished parsing and indexing. Starting to export files')
             AB_dict_posting = {}
@@ -73,10 +74,18 @@ def run_engine():
                 except:
                     print("wrong")
 
-            utils.save_obj(dict_dictionary, "inverted_idx")
-            utils.save_obj(AB_dict_posting, "posting_file")
+            with open('inverted_idx.txt' , 'w') as file :
+                file.write(json.dumps(dict_dictionary))
+            with open('posting_file.txt' , 'w') as file :
+                file.write(json.dumps(AB_dict_posting))
+                # utils.save_obj(dict_dictionary, "inverted_idx")
+                # utils.save_obj(AB_dict_posting, "posting_file")
 
-    utils.save_obj(indexer.documents_info, "documents_info")
+            # my_data_file = open('file.txt', 'r')
+    with open('documents_info.txt' , 'w') as file :
+        file.write(json.dumps(indexer.documents_info))
+        # utils.save_obj(indexer.documents_info, "documents_info")
+    print("--- %s seconds ---" % (time.time() - start_time))
     test3 = 1
 
 
