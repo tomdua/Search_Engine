@@ -26,6 +26,7 @@ class Parse:
         self.expandUrl = False
         self.stemming = None
 
+
     def parse_sentence(self, text):
         """
         This function tokenize, remove stop words and apply lower case for every word within the text
@@ -94,12 +95,16 @@ class Parse:
                     text4_correct = [self.parser_url(w) for w in text4]
                 #######################################################
 
-                #################### hashtags ########################
-                # temp_text=text
-                tokinzed_hatags = self.parse_hashtag(text)
-                if tokinzed_hatags:
-                    text = re.sub(r'\B#\w*[a-zA-Z]+\w*', "", text)
-                #######################################################
+            #################### hashtags ########################
+            tokinzed_hatags = self.parse_hashtag(text)
+            # rx2 = re.compile(r'(#[^\s]+)')
+            # text7 = rx2.findall(text)
+            # text4_correct = []
+            if tokinzed_hatags:
+                for w in tokinzed_hatags:
+                    if w[0] is '#':
+                        text = text.replace(w, '', 1)
+            #######################################################
 
                 #################### mentions #########################
                 # tokinzed_mentions = self.parse_mentions(text)
@@ -220,13 +225,17 @@ class Parse:
                     doc_pos[term.lower()] = {2: self.find_postion(full_text, term, True)}
 
         document = Document(tweet_id, tweet_date, full_text, url, retweet_text, retweet_url, quote_text,
-                            quote_url, term_dict, doc_length, doc_pos)
+                            quote_url, term_dict, doc_length)
         # self.tempDocuments=self.tempDocuments+document
         return document
 
     ############ private func ##############################
 
     def change_format(self, num):
+        """
+        :param: int/float - number
+        :return: string- number
+        """
         if num > 999:
             magnitude = 0
             while abs(num) >= 1000:
@@ -238,37 +247,38 @@ class Parse:
             return str(num)
 
     def parse_quotes(self, text):
+        """
+        :param text: a full text from the twitter.
+        :return: quotes terms.
+        'The best beer in the world'
+        """
         rx2 = re.compile(r'"(?:(?:(?!(?<!\\)").)*)"')
         matches = rx2.findall(text)
         return matches
 
-    #
-    # def parse_mentions(self, text):
-    #     rx2 = re.compile(r'(@+[0-9|a-z|A-Z]*)')
-    #     mentions_trem=rx2.findall(text)
-    #     return mentions_trem
+    def parse_mentions(self, text):
+        mentions_trem = []
+        tokenize = word_tokenize(text)
+        for i in range(len(tokenize) - 1):
+            if tokenize[i] is '@':
+                mentions_trem.append('@' + tokenize[i + 1])
+        return mentions_trem
 
     def parse_hashtag(self, text):
-
+        """
+        :param text: a full text from the twitter.
+        :return: hashtags terms split from the text.
+        #stayAtHome - stay, at, home, #stayathome
+        """
+        #text='#tom_matan'
+        # text= "#TomMatanNoy dfsafasdfasfds #rrerretre trotro #Almog_Rotam_ew"
         hashtags_trem = []
-        tag = re.findall(r'(#+\w*)', text)
-        if tag:
+        tag=re.findall(r'(#+\w*)', text)
+        if tag.__len__() >= 1:
             for term in tag:
                 hashtags_trem.append(term[0] + term[1:].lower())
                 hashtags_trem += [w.lower() for w in re.findall('[a-z|A-Z][^A-Z|_]*', term)]
         return hashtags_trem
-
-        # tag1 = re.findall(r'\B#\w*[a-zA-Z]+\w*', text)
-        # tag2 = re.findall(r'#(\w+)', text)
-        # tag2 = [re.split('\_|(?=[A-Z])', w) for w in tag2]  # '(?=[A-Z])'
-        # for list in tag2:
-        #     tag1.extend(list)
-        # hashtags_trem = [w.lower() for w in tag1]
-        # # if tag:
-        # #     for term in tag:
-        # #         hashtags_trem.append(term[0] + term[1:].lower())
-        # #         hashtags_trem.extend(([t.lower() for t in re.split(r'([A-Z]*[a-z]*)', term.split("#")[1]) if t]))
-        # return hashtags_trem
 
     """
     split and fix the terms in url
@@ -283,6 +293,27 @@ class Parse:
             terms = re.split('[\[/:"//?={"\]]' , url)
             # url_parse = [w for w in terms if w not in self.stop_words]
         return terms
+        """
+        :param url: a url from twitter.
+        :return: url split according to the url laws.
+        #https://www.instagram.com/p/CD7fAPWs3WM/?igshid=o9kf0ugp1l8x - https, www, instagram.com, p, CD7fAPWs3WM, igshid, o9kf0ugp1l8x
+        """
+        url_parse=[]
+        if len(url)>2:
+            # tokenize = word_tokenize(url)
+            # i=0
+            # for token in range(len(tokenize)):
+            #     new_token = re.split('[/\=:#?]', tokenize[token])
+            #     if new_token[i] not in self.stop_words:
+            #         terms.extend(new_token)
+            #     i=i+1
+            terms = re.split('[\[/:"//?={"\]]' , url)
+            url_parse = [w for w in terms if w not in self.stop_words]
+        # url_parse = [w for w in terms if w not in self.stop_words]
+
+        # terms = re.findall('https?://(?:[-\w.]|(?:%[\da-fA-F]{2}))+', url)
+        # url_parse = [w for w in terms if w not in self.stop_words]
+        return url_parse
 
     def get_continuous_chunks(self, text):
         #[A - Z][-a - zA - Z] * (?:\s+[A-Z][-a-zA-Z] *) * ((?:[A-Z][a-z] *))*
@@ -330,4 +361,3 @@ class Parse:
             else:
                 index = full_text.find(term.title())
 
-        return index

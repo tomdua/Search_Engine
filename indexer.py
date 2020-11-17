@@ -62,7 +62,6 @@ class Indexer:
                             # del document.term_doc_dictionary[term]
                 doc_pos_term=document.doc_pos.get(term.lower())
                 self.posting_file[term].append((term, document.tweet_id, document_dictionary[term],doc_pos_term))
-
             except:
                 print('problem with the following key {}'.format(term[0]))
         try:
@@ -79,6 +78,6 @@ class Indexer:
         except:
             print('problem with {}'.format(document_dictionary))
 
-    # def find_words(self, test_str, test_sub):
-    #     res = [i for i in range(len(test_str)) if test_str.startswith(test_sub, i)]
-    #     return res
+    def find_words(self, test_str, test_sub):
+        res = [i for i in range(len(test_str)) if test_str.startswith(test_sub, i)]
+        return res
