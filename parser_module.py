@@ -95,16 +95,16 @@ class Parse:
                     text4_correct = [self.parser_url(w) for w in text4]
                 #######################################################
 
-            #################### hashtags ########################
-            tokinzed_hatags = self.parse_hashtag(text)
-            # rx2 = re.compile(r'(#[^\s]+)')
-            # text7 = rx2.findall(text)
-            # text4_correct = []
-            if tokinzed_hatags:
-                for w in tokinzed_hatags:
-                    if w[0] is '#':
-                        text = text.replace(w, '', 1)
-            #######################################################
+                #################### hashtags ########################
+                tokinzed_hatags = self.parse_hashtag(text)
+                # rx2 = re.compile(r'(#[^\s]+)')
+                # text7 = rx2.findall(text)
+                # text4_correct = []
+                if tokinzed_hatags:
+                    for w in tokinzed_hatags:
+                        if w[0] is '#':
+                            text = text.replace(w, '', 1)
+                #######################################################
 
                 #################### mentions #########################
                 # tokinzed_mentions = self.parse_mentions(text)
@@ -118,21 +118,10 @@ class Parse:
 
                 rx2 = re.compile(r'[^\w\s,]')
                 text5 = rx2.findall(text)
-                #
-                # text6=[]
-                # text5 = [w for w in text if any(c for c in w if unicodedata.category(c) == 'So')]
-                # try:
-                #     text6 = [w for w in text if '\n' not in w and '🩸' not in w and any(
-                #         c for c in w if unicodedata.name(c).startswith("EMOJI MODIFIER"))]
-                # except:
-                #     print("An exception occurred")
 
-                # text5_new=[]
                 if text5:
                     text = rx2.sub("", text)
-                # if text6:
-                #     for w in text6:
-                #         text = text.replace(w, '', 1)
+
 
                 #############################################################
 
@@ -225,7 +214,7 @@ class Parse:
                     doc_pos[term.lower()] = {2: self.find_postion(full_text, term, True)}
 
         document = Document(tweet_id, tweet_date, full_text, url, retweet_text, retweet_url, quote_text,
-                            quote_url, term_dict, doc_length)
+                            quote_url, term_dict, doc_length, doc_pos)
         # self.tempDocuments=self.tempDocuments+document
         return document
 
@@ -256,13 +245,13 @@ class Parse:
         matches = rx2.findall(text)
         return matches
 
-    def parse_mentions(self, text):
-        mentions_trem = []
-        tokenize = word_tokenize(text)
-        for i in range(len(tokenize) - 1):
-            if tokenize[i] is '@':
-                mentions_trem.append('@' + tokenize[i + 1])
-        return mentions_trem
+    # def parse_mentions(self, text):
+    #     mentions_trem = []
+    #     tokenize = word_tokenize(text)
+    #     for i in range(len(tokenize) - 1):
+    #         if tokenize[i] is '@':
+    #             mentions_trem.append('@' + tokenize[i + 1])
+    #     return mentions_trem
 
     def parse_hashtag(self, text):
         """
@@ -274,83 +263,31 @@ class Parse:
         # text= "#TomMatanNoy dfsafasdfasfds #rrerretre trotro #Almog_Rotam_ew"
         hashtags_trem = []
         tag=re.findall(r'(#+\w*)', text)
-        if tag.__len__() >= 1:
+        if tag:
             for term in tag:
                 hashtags_trem.append(term[0] + term[1:].lower())
                 hashtags_trem += [w.lower() for w in re.findall('[a-z|A-Z][^A-Z|_]*', term)]
         return hashtags_trem
 
-    """
-    split and fix the terms in url
-    @param terms array, temp array that insert all the word_tokenize excepet few sign
-    @param tokenize
-    @return array of terms from the url
-    """
+
 
     def parser_url(self, url):
-        terms = []
-        if len(url) > 2:
-            terms = re.split('[\[/:"//?={"\]]' , url)
-            # url_parse = [w for w in terms if w not in self.stop_words]
-        return terms
-        """
-        :param url: a url from twitter.
-        :return: url split according to the url laws.
-        #https://www.instagram.com/p/CD7fAPWs3WM/?igshid=o9kf0ugp1l8x - https, www, instagram.com, p, CD7fAPWs3WM, igshid, o9kf0ugp1l8x
-        """
+
         url_parse=[]
         if len(url)>2:
-            # tokenize = word_tokenize(url)
-            # i=0
-            # for token in range(len(tokenize)):
-            #     new_token = re.split('[/\=:#?]', tokenize[token])
-            #     if new_token[i] not in self.stop_words:
-            #         terms.extend(new_token)
-            #     i=i+1
-            terms = re.split('[\[/:"//?={"\]]' , url)
-            url_parse = [w for w in terms if w not in self.stop_words]
-        # url_parse = [w for w in terms if w not in self.stop_words]
-
-        # terms = re.findall('https?://(?:[-\w.]|(?:%[\da-fA-F]{2}))+', url)
-        # url_parse = [w for w in terms if w not in self.stop_words]
+            url_parse = re.split('[\[/:"//?={"\]]' , url)
+            # url_parse = [w for w in terms if w not in self.stop_words]
         return url_parse
 
     def get_continuous_chunks(self, text):
-        #[A - Z][-a - zA - Z] * (?:\s+[A-Z][-a-zA-Z] *) * ((?:[A-Z][a-z] *))*
 
         rx2 = re.compile(r'[A-Z][-a-zA-Z]*(?:\s+[A-Z][-a-zA-Z]*)*')
         matches = rx2.findall(text)
         tokinzed_entity_new = [e for e in matches if len(e.split()) > 1]
-
-
-
-        # chunked = ne_chunk(pos_tag(word_tokenize(text)))
-        # continuous_chunk = []
-        # current_chunk = []
-        # for i in chunked:
-        #     if type(i) == Tree:
-        #         current_chunk.append(" ".join([token for token, pos in i.leaves()]))
-        #     if current_chunk:
-        #         named_entity = " ".join(current_chunk)
-        #         if named_entity not in continuous_chunk:
-        #             continuous_chunk.append(named_entity)
-        #             current_chunk = []
-        #     else:
-        #         continue
-        # tokinzed_entity_new = [e for e in continuous_chunk if len(e.split()) > 1]
-
-
         return tokinzed_entity_new
 
     def find_postion(self, full_text, term, more_than_one):
 
-        #w=term    # pattern= "r'\b"+w+"\b'"
-        # rx2 = re.compile(rf'\b{term}\b')
-        # test = rx2.finditer(full_text)
-        # for w in test:
-        #     print(w.start())
-        # if test:
-        #     array.append(test.regs[0])
         if more_than_one is True:
             index = [i for i in range(len(full_text)) if full_text.startswith(term, i)]
         else:
@@ -361,3 +298,4 @@ class Parse:
             else:
                 index = full_text.find(term.title())
 
+        return index

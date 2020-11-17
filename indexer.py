@@ -64,6 +64,7 @@ class Indexer:
                 self.posting_file[term].append((term, document.tweet_id, document_dictionary[term],doc_pos_term))
             except:
                 print('problem with the following key {}'.format(term[0]))
+
         try:
             max_tf = document_dictionary[max(document_dictionary, key=document_dictionary.get)]
             unique_num_value = collections.Counter(document_dictionary.values()).most_common()[-1][0]
