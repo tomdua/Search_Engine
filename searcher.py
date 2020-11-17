@@ -1,3 +1,5 @@
+import json
+
 from parser_module import Parse
 from ranker import Ranker
 import utils
@@ -19,21 +21,23 @@ class Searcher:
         :param query: query
         :return: dictionary of relevant documents.
         """
-        posting = utils.load_obj("posting_file")
-        posting_file = posting[0]
+        with open('posting_file.txt') as json_file:
+            posting_file = json.load(json_file)
         relevant_docs = {}
         for term in query:
             try: # an example of checks that you have to do
-                # pos=self.inverted_index[term][1]
-                # pos=pos.replace("'","",1)
-                for term in posting_file:
-                # posting_doc = posting_file[term]
-                # for doc_tuple in posting_doc:
-                    doc = term[1]
-                    if doc not in relevant_docs.keys():
-                        relevant_docs[doc] = 1
-                    else:
-                        relevant_docs[doc] += 1
+                if term in self.inverted_index.keys():
+                    indexes_in_posting=[self.inverted_index[term][1],self.inverted_index[term][2]]
+                    #list_in_posting = posting_file[indexes_in_posting[0],indexes_in_posting[1]]
+                    x = indexes_in_posting[0]
+                    y = indexes_in_posting[1]
+                    #test= posting_file['s'][135]
+                    list_in_posting = posting_file[x][y]
+                    for item in list_in_posting:
+                        if item[1] not in relevant_docs.keys():
+                            relevant_docs[item[1]] = 1
+                        else:
+                            relevant_docs[item[1]] += 1
             except:
                 print('term {} not found in posting'.format(term))
         return relevant_docs

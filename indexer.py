@@ -9,6 +9,8 @@ class Indexer:
         self.posting_file = {}
         self.config = config
         self.documents_info = {}
+        self.AB_dict_posting = {}
+        self.dict_dictionary = {}
 
     def add_new_doc(self, document):
         """
@@ -37,6 +39,9 @@ class Indexer:
                     self.inverted_idx[term] = 1
                     first = True
                     self.posting_file[term] = []
+                    self.dict_dictionary[term] = []
+                if term[0] not in self.AB_dict_posting.keys():
+                    self.AB_dict_posting[term[0]] = []
                     # self.inverted_idx_temp[term] = []
                 if not first:
                     self.inverted_idx[term] += 1
@@ -48,6 +53,8 @@ class Indexer:
                             self.inverted_idx[term1] = self.inverted_idx.pop(term)
                             self.posting_file[term1] = self.posting_file.pop(term)
                             document.term_doc_dictionary[term1] = document.term_doc_dictionary.pop(term)
+                            self.dict_dictionary[term1] = self.dict_dictionary.pop(term)
+
                             term = term1
                             # del document.term_doc_dictionary[term]
                         # elif term.isupper():
@@ -57,11 +64,23 @@ class Indexer:
                             self.inverted_idx[term2] = self.inverted_idx.pop(term)
                             self.posting_file[term2] = self.posting_file.pop(term)
                             document.term_doc_dictionary[term2] = document.term_doc_dictionary.pop(term)
+                            self.dict_dictionary[term2] = self.dict_dictionary.pop(term)
+
                             term = term2
                             # document.term_doc_dictionary[term2] = document.term_doc_dictionary.pop(term)
                             # del document.term_doc_dictionary[term]
                 doc_pos_term=document.doc_pos.get(term.lower())
                 self.posting_file[term].append((term, document.tweet_id, document_dictionary[term],doc_pos_term))
+
+                self.AB_dict_posting[term[0]].append(self.posting_file[term])
+                indices = self.findInList(term,  self.AB_dict_posting[term[0]])
+                self.dict_dictionary[term] = (self.inverted_idx[term], term[0], indices)
+
+
+
+
+
+
             except:
                 print('problem with the following key {}'.format(term[0]))
 
@@ -82,3 +101,8 @@ class Indexer:
     def find_words(self, test_str, test_sub):
         res = [i for i in range(len(test_str)) if test_str.startswith(test_sub, i)]
         return res
+
+    def findInList(self,val, lis):
+        ind = [(j, i, k) for j, x in enumerate(lis) for i, y in enumerate(x) \
+               for k, z in enumerate(y) if z == val]
+        return ind[0][0] if ind else None

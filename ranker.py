@@ -1,9 +1,47 @@
+from numpy import asarray
+
+
 class Ranker:
     def __init__(self):
+        self.posting_file=None
         pass
 
     @staticmethod
     def rank_relevant_doc(relevant_doc):
+
+
+        corpus= []
+
+
+
+
+
+
+
+
+
+
+
+
+        embeddings_dictionary = dict()
+        glove_file = open('glove.twitter.27B.200d.txt', encoding="utf8")
+
+        for line in glove_file:
+            records = line.split()
+            word = records[0]
+            vector_dimensions = asarray(records[1:], dtype='float32')
+            embeddings_dictionary[word] = vector_dimensions
+
+        glove_file.close()
+
+
+
+
+
+
+
+
+
         """
         This function provides rank for each relevant document and sorts them by their scores.
         The current score considers solely the number of terms shared by the tweet (full_text) and query.

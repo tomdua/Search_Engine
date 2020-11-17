@@ -18,7 +18,7 @@ class Parse:
         new_words = {"", "www", '', "https", "http", "^", "!", "?", "^", "&", "*", "#", "(", ")", ",", ";", ":", "{",
                      "}", "-", "[", "]", "<", ">", "|", "+", "`", "'", ".", "...", "..", "@", "’", "I", "“", "•",
                      "️", "⬇", "'s", "``", "''", "”", "@:", "_", "++.pls", "....", "......", ".....", "=", "—",
-                     "status", "instagram.com", "twitter.com", "t.co", "rt", "RT", "%"}
+                     "status", "instagram.com", "twitter.com", "t.co", "rt", "RT", "%","/", "…"}
 
         for i in new_words:
             self.stop_words.append(i)

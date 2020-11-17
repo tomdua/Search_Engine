@@ -1,5 +1,7 @@
 import json
 
+from numpy import asarray
+
 from reader import ReadFile
 from configuration import ConfigClass
 from parser_module import Parse
@@ -21,12 +23,12 @@ def run_engine():
     :return:
     """
 
-    # with open('inverted_idx.txt') as json_file:
-    #     inverted_idx = json.load(json_file)
-    # with open('posting_file.txt') as json_file:
-    #     posting_file = json.load(json_file)
-    # with open('documents_info.txt') as json_file:
-    #     documents_info = json.load(json_file)
+    with open('inverted_idx.txt') as json_file:
+        inverted_idx = json.load(json_file)
+    with open('posting_file.txt') as json_file:
+        posting_file = json.load(json_file)
+    with open('documents_info.txt') as json_file:
+        documents_info = json.load(json_file)
 
 
     config = ConfigClass()
@@ -57,31 +59,31 @@ def run_engine():
         if idx % 20 == 0:
             # print('Finished parsing and indexing 1000 documents. Starting to export files')
             # print('Finished parsing and indexing. Starting to export files')
-            AB_dict_posting = {}
-            dict_dictionary = {}
-
-            for term in indexer.inverted_idx.keys():
-                if term not in dict_dictionary.keys():
-                    dict_dictionary[term] = []
-                try:
-                    # Update inverted index and posting
-                    if term[0] not in AB_dict_posting.keys():
-                        AB_dict_posting[term[0]] = []
-
-                    AB_dict_posting[term[0]].append(indexer.posting_file[term])
-                    indices = findInList(term, AB_dict_posting[term[0]])
-                    dict_dictionary[term] = (indexer.inverted_idx[term], term[0], indices)
-                    # test=1
-                except:
-                    print("wrong")
+            # AB_dict_posting = {}
+            # dict_dictionary = {}
+            #
+            # for term in indexer.inverted_idx.keys():
+            #     if term not in dict_dictionary.keys():
+            #         dict_dictionary[term] = []
+            #     try:
+            #         # Update inverted index and posting
+            #         if term[0] not in AB_dict_posting.keys():
+            #             AB_dict_posting[term[0]] = []
+            #
+            #         AB_dict_posting[term[0]].append(indexer.posting_file[term])
+            #         indices = findInList(term, AB_dict_posting[term[0]])
+            #         dict_dictionary[term] = (indexer.inverted_idx[term], term[0], indices)
+            #         # test=1
+            #     except:
+            #         print("wrong")
 
             # f = open("dict.txt", "w")
             # f.write(str(dict_dictionary))
             # f.close()
             with open('inverted_idx.txt', 'w') as file:
-                file.write(json.dumps(dict_dictionary))
+                file.write(json.dumps(indexer.dict_dictionary))
             with open('posting_file.txt', 'w') as file:
-                file.write(json.dumps(AB_dict_posting))
+                file.write(json.dumps(indexer.AB_dict_posting))
             # utils.save_obj(dict_dictionary, "inverted_idx")
             # utils.save_obj(AB_dict_posting, "posting_file")
 
@@ -95,9 +97,9 @@ def run_engine():
 
 def load_index():
     print('Load inverted index')
-    inverted_index = utils.load_obj("inverted_idx")
-    inverted_index = inverted_index[0]
-    return inverted_index
+    with open('inverted_idx.txt') as json_file:
+        inverted_idx = json.load(json_file)
+    return inverted_idx
 
 
 def search_and_rank_query(query, inverted_index, k):
@@ -114,6 +116,6 @@ def main():
     query = input("Please enter a query: ")
     k = int(input("Please enter number of docs to retrieve: "))
     inverted_index = load_index()
-    print(inverted_index)
+    # print(inverted_index)
     for doc_tuple in search_and_rank_query(query, inverted_index, k):
         print('tweet id: {}, score (unique common words with query): {}'.format(doc_tuple[0], doc_tuple[1]))
