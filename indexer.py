@@ -4,8 +4,8 @@ import collections
 class Indexer:
 
     def __init__(self, config):
-        self.inverted_idx = {}
-        self.parse = None
+        self.indexing_temp = {}
+        self.entity_temp = {}
         self.posting_file = {}
         self.config = config
         self.documents_info = {}
@@ -20,64 +20,45 @@ class Indexer:
         :return: -
         """
 
-
         document_dictionary = document.term_doc_dictionary
         # Go over each term in the doc
-        for term in document_dictionary.copy():
+        for term in dict(document_dictionary):
             try:
-                first = False
                 #### for entities ######
-                if term in self.parse.entity_temp:
-                    if self.parse.entity_temp[term] == 1:
+                if term in dict(self.entity_temp):
+                    if self.entity_temp[term] == 1:
                         del document.term_doc_dictionary[term]
+                        del self.entity_temp[term]
                         continue
 
-                # else:
-                #     continue
-                # Update inverted index and posting
-                if term not in self.inverted_idx.keys():
-                    self.inverted_idx[term] = 1
-                    first = True
-                    self.posting_file[term] = []
-                    self.dict_dictionary[term] = []
-                if term[0] not in self.AB_dict_posting.keys():
-                    self.AB_dict_posting[term[0]] = []
-                    # self.inverted_idx_temp[term] = []
-                if not first:
-                    self.inverted_idx[term] += 1
                 ### for small/big capital letters ####
                 if isinstance(term, str):
                     if term[0].isupper():
-                        if term.lower() in self.inverted_idx:
+                        if term.lower() in self.indexing_temp:
                             term1 = term.lower()
-                            self.inverted_idx[term1] = self.inverted_idx.pop(term)
-                            self.posting_file[term1] = self.posting_file.pop(term)
+                            if term1 not in self.indexing_temp:
+                                self.indexing_temp[term1] = self.indexing_temp.pop(term)
                             document.term_doc_dictionary[term1] = document.term_doc_dictionary.pop(term)
-                            self.dict_dictionary[term1] = self.dict_dictionary.pop(term)
-
                             term = term1
-                            # del document.term_doc_dictionary[term]
-                        # elif term.isupper():
-                        #     continue
+
                         else:
                             term2 = term.upper()
-                            self.inverted_idx[term2] = self.inverted_idx.pop(term)
-                            self.posting_file[term2] = self.posting_file.pop(term)
+                            if term2 not in self.indexing_temp:
+                                self.indexing_temp[term2] = self.indexing_temp.pop(term)
                             document.term_doc_dictionary[term2] = document.term_doc_dictionary.pop(term)
-                            self.dict_dictionary[term2] = self.dict_dictionary.pop(term)
-
                             term = term2
-                            # document.term_doc_dictionary[term2] = document.term_doc_dictionary.pop(term)
-                            # del document.term_doc_dictionary[term]
-                doc_pos_term=document.doc_pos.get(term.lower())
-                self.posting_file[term].append((term, document.tweet_id, document_dictionary[term],doc_pos_term))
 
+                if term not in self.posting_file:
+                    self.posting_file[term] = []
+                if term[0] not in self.AB_dict_posting:
+                    self.AB_dict_posting[term[0]] = []
+
+                doc_pos_term = document.doc_pos.get(term.lower())
+                self.posting_file[term].append((term, document.tweet_id, document.term_doc_dictionary[term], doc_pos_term))
                 self.AB_dict_posting[term[0]].append(self.posting_file[term])
-                indices = self.findInList(term,  self.AB_dict_posting[term[0]])
-                self.dict_dictionary[term] = (self.inverted_idx[term], term[0], indices)
-
-
-
+                indices = self.findInList(term, self.AB_dict_posting[term[0]])
+                if term not in self.dict_dictionary.keys():
+                    self.dict_dictionary[term] = (self.indexing_temp[term], term[0], indices)
 
 
 
@@ -85,24 +66,24 @@ class Indexer:
                 print('problem with the following key {}'.format(term[0]))
 
         try:
-            max_tf = document_dictionary[max(document_dictionary, key=document_dictionary.get)]
-            unique_num_value = collections.Counter(document_dictionary.values()).most_common()[-1][0]
-            unique_num = 0
+            max_tf = document.term_doc_dictionary[max(document.term_doc_dictionary, key=document.term_doc_dictionary.get)]
+            unique_num_value = len(set(document.full_text.split()))
+            # unique_num = 0
 
-            for key, value in document_dictionary.items():
-                if value == unique_num_value:
-                    unique_num = unique_num + 1
+            # for key, value in document_dictionary.items():
+            #     if value == unique_num_value:
+            #         unique_num = unique_num + 1
 
-            self.documents_info[document.tweet_id] = {'max_tf': max_tf, 'unique_instances': unique_num,
+            self.documents_info[document.tweet_id] = {'max_tf': max_tf, 'unique_num': unique_num_value,
                                                       'tweet_length': document.doc_length}
         except:
             print('problem with {}'.format(document_dictionary))
 
-    def find_words(self, test_str, test_sub):
-        res = [i for i in range(len(test_str)) if test_str.startswith(test_sub, i)]
-        return res
+    # def find_words(self, test_str, test_sub):
+    #     res = [i for i in range(len(test_str)) if test_str.startswith(test_sub, i)]
+    #     return res
 
-    def findInList(self,val, lis):
+    def findInList(self, val, lis):
         ind = [(j, i, k) for j, x in enumerate(lis) for i, y in enumerate(x) \
                for k, z in enumerate(y) if z == val]
         return ind[0][0] if ind else None

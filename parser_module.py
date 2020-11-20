@@ -20,12 +20,12 @@ class Parse:
                      "️", "⬇", "'s", "``", "''", "”", "@:", "_", "++.pls", "....", "......", ".....", "=", "—",
                      "status", "instagram.com", "twitter.com", "t.co", "rt", "RT", "%","/", "…"}
 
-        for i in new_words:
-            self.stop_words.append(i)
+        # for i in new_words:
+        self.stop_words.extend(new_words)
         self.entity_temp = {}
         self.expandUrl = False
         self.stemming = None
-
+        self.inverted_idx = {}
 
     def parse_sentence(self, text):
         """
@@ -140,7 +140,9 @@ class Parse:
                 # text_tokens=regexp_tokenize(text, pattern=r"\s|[\.,;']\d+\.\d+", gaps=True)
                 text_tokens = text_tokens + text0 + text1 + text3_new + text2 + text5 + tokinzed_hatags + tokinzed_mentions
                 if not self.expandUrl:
-                    text_tokens = text_tokens + text4_correct
+                    if text4_correct:
+                        for w in text4_correct:
+                            text_tokens = text_tokens + w
             except:
                 print("something wrong with {}", text)
         else:
@@ -166,12 +168,14 @@ class Parse:
         quote_url = doc_as_list[7]
         term_dict = {}
         doc_pos = {}
+        self.expandUrl = False
 
-        if url:
+
+        if len(url)>2:
             self.expandUrl = True
-        line = " Call for work from home  https://t.co/fKiS5W3w2o"
-
-        full_text = full_text + line
+        # line = " Call for work from home  https://t.co/fKiS5W3w2o"
+        #
+        # full_text = full_text + line
         tokenized_text = self.parse_sentence(full_text)
         tokinzed_quote = self.parse_quotes(full_text)
         tokinzed_entity = self.get_continuous_chunks(full_text)
@@ -185,6 +189,7 @@ class Parse:
 
         tokenized_text = tokenized_text + tokinzed_quote + tokinzed_entity
 
+        tokinzed_url=[]
         if self.expandUrl:
             tokinzed_url = self.parser_url(url)
             tokenized_text = tokenized_text + tokinzed_url
@@ -201,18 +206,22 @@ class Parse:
         for term in text_tokens:
             if term in tokinzed_url:
                 if term not in term_dict.keys():
+                    self.inverted_idx[term]= 1
                     term_dict[term] = 1
                     doc_pos[term.lower()] = {3: self.find_postion(url, term, False)}
                 else:
+                    self.inverted_idx[term] +=1
                     term_dict[term] += 1
                     doc_pos[term.lower()] = {3: self.find_postion(url, term, True)}
 
             else:
                 if term not in term_dict.keys():
+                    self.inverted_idx[term] = 1
                     term_dict[term] = 1
                     doc_pos[term.lower()] = {2: self.find_postion(full_text, term, False)}
 
                 else:
+                    self.inverted_idx[term] += 1
                     term_dict[term] += 1
                     doc_pos[term.lower()] = {2: self.find_postion(full_text, term, True)}
 
@@ -228,7 +237,7 @@ class Parse:
         :param: int/float - number
         :return: string- number
         """
-        if num > 999 and len(num)<11:
+        if num > 999:
             magnitude = 0
             while abs(num) >= 1000:
                 magnitude += 1
@@ -275,7 +284,6 @@ class Parse:
 
 
     def parser_url(self, url):
-
         url_parse=[]
         if len(url)>2:
             url_parse = re.split('[\[/:"//?={"\]]' , url)
