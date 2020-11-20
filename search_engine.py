@@ -2,6 +2,7 @@ import json
 
 from numpy import asarray
 
+import indexer
 from reader import ReadFile
 from configuration import ConfigClass
 from parser_module import Parse
@@ -9,8 +10,8 @@ from stemmer import Stemmer
 from indexer import Indexer
 from searcher import Searcher
 import utils
-import time
 from collections import Counter
+import time
 
 
 def findInList(val, lis):
@@ -37,22 +38,19 @@ def run_engine():
     # with open('documents_info.txt', 'r') as sample:
     #     for line in sample:
     #         documents_info.update(json.loads(line))
-
     config = ConfigClass()
+    start_time = time.time()
+
     r = ReadFile(corpus_path=config.get__corpusPath())
     p = Parse()
     stemming = Stemmer()
     indexer = Indexer(config)
-    start_time = time.time()
-
     documents_list = r.read_file("asd")
-    documents_num= len(documents_list)
-    # utils.save_obj(documents_list, "documents_list")
-    print("--- %s seconds parser readStop---" % (time.time() - start_time))
+    documents_num = len(documents_list)
 
     documents_list_after_parse = []
     append = documents_list_after_parse.append
-
+    number_of_documents = 0
     # usingStemming = input("You will want to use stemming?(yes/no): ")
     # if usingStemming == 'yes':
     #     p.stemming = stemming
@@ -64,7 +62,6 @@ def run_engine():
     # while documents_list:
 
     for idx, document in enumerate(documents_list, 1):
-
         if idx == 1:
             print("--- %s seconds parser start---" % (time.time() - start_time))
         # parse the document
@@ -173,7 +170,7 @@ def run_engine():
     indexer.indexing_temp={}
     indexer.entity_temp={}
     print("--- %s seconds index end ---" % (time.time() - start_time))
-    test3 = 1
+    test3=1
 
 
 def load_index():

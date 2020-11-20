@@ -4,13 +4,15 @@ import collections
 class Indexer:
 
     def __init__(self, config):
-        self.indexing_temp = {}
-        self.entity_temp = {}
+        self.inverted_idx = {}
+        self.parse = None
         self.posting_file = {}
         self.config = config
         self.documents_info = {}
         self.AB_dict_posting = {}
         self.dict_dictionary = {}
+        #self.df = {}
+
 
     def add_new_doc(self, document):
         """
@@ -24,13 +26,34 @@ class Indexer:
         # Go over each term in the doc
         for term in dict(document_dictionary):
             try:
+                #dftemp=[]
                 #### for entities ######
                 if term in dict(self.entity_temp):
                     if self.entity_temp[term] == 1:
                         del document.term_doc_dictionary[term]
                         del self.entity_temp[term]
                         continue
+                #       if term not in self.df.keys():
+                #    self.df[term]=1
+                #    dftemp.append(term)
 
+
+                #if term in self.df.keys() and (not dftemp.__contains__(term)):
+                #    self.df[term]+=1
+                #    dftemp.append(term)
+                # else:
+                #     continue
+                # Update inverted index and posting
+                if term not in self.inverted_idx.keys():
+                    self.inverted_idx[term] = 1
+                    first = True
+                    self.posting_file[term] = []
+                    self.dict_dictionary[term] = []
+                if term[0] not in self.AB_dict_posting.keys():
+                    self.AB_dict_posting[term[0]] = []
+                    # self.inverted_idx_temp[term] = []
+                if not first:
+                    self.inverted_idx[term] += 1
                 ### for small/big capital letters ####
                 if isinstance(term, str):
                     if term[0].isupper():

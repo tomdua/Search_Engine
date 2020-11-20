@@ -33,7 +33,6 @@ class Parse:
         :param text:
         :return:
         """
-
         if text:
             text_tokens=[]
             try:
@@ -139,10 +138,10 @@ class Parse:
                 text_tokens = word_tokenize(text)
                 # text_tokens=regexp_tokenize(text, pattern=r"\s|[\.,;']\d+\.\d+", gaps=True)
                 text_tokens = text_tokens + text0 + text1 + text3_new + text2 + text5 + tokinzed_hatags + tokinzed_mentions
-                if not self.expandUrl:
-                    if text4_correct:
-                        for w in text4_correct:
-                            text_tokens = text_tokens + w
+                # if not self.expandUrl:
+                if text4_correct:
+                         for w in text4_correct :
+                             text_tokens = text_tokens + w
             except:
                 print("something wrong with {}", text)
         else:
@@ -168,14 +167,42 @@ class Parse:
         quote_url = doc_as_list[7]
         term_dict = {}
         doc_pos = {}
-        self.expandUrl = False
+        #self.expandUrl = False
 
 
-        if len(url)>2:
-            self.expandUrl = True
-        # line = " Call for work from home  https://t.co/fKiS5W3w2o"
-        #
-        # full_text = full_text + line
+        url_external = re.findall('(https?://[^\s]+)' , url)
+        url_full_text = re.findall('(https?://[^\s]+)' , full_text)
+        ###############################################################
+        if (url_external) or (url_full_text):
+            ########## Url of full text empty, but extrnal not#############
+            if (len(url_full_text)==0 and len(url_external)>0):
+                for i in range(len(url_external)):
+                    full_text += " " + url_external[i]
+
+            ########## Url of full text and extrnal equal #################
+            if len(url_external) == len(url_full_text):
+                i = 0
+                full_text = self.reaplce_url(i , full_text, url_full_text , url_external)
+
+            ########## extrnal is bigger ##################################
+            if (len(url_external) > len(url_full_text) and len(url_full_text) > 0) :
+                i = 0
+                full_text = self.reaplce_url(i , full_text,url_full_text , url_external)
+                i = len(url_external)-len(url_full_text)
+                for i in range(len(url_external)):
+                    full_text += url_external[i]
+
+            ########## url_full_text is bigger #############################
+            if(len(url_full_text)>len(url_external) and len(url_external)>0):
+                i = 0
+                for term in url_external:
+                    url_full_text=url_external[i]
+                    full_text = full_text.replace(url_full_text, term[0:len(term)-1])
+                    i += 1
+
+
+        line = " "
+        full_text = full_text + line
         tokenized_text = self.parse_sentence(full_text)
         tokinzed_quote = self.parse_quotes(full_text)
         tokinzed_entity = self.get_continuous_chunks(full_text)
@@ -189,10 +216,9 @@ class Parse:
 
         tokenized_text = tokenized_text + tokinzed_quote + tokinzed_entity
 
-        tokinzed_url=[]
-        if self.expandUrl:
-            tokinzed_url = self.parser_url(url)
-            tokenized_text = tokenized_text + tokinzed_url
+        # if self.expandUrl:
+        #     tokinzed_url = self.parser_url(url)
+        #     tokenized_text = tokenized_text + tokinzed_url
 
         # text_tokens = [w for w in tokenized_text if w not in self.stop_words]
 
@@ -204,30 +230,30 @@ class Parse:
 
         doc_length = len(full_text)
         for term in text_tokens:
-            if term in tokinzed_url:
-                if term not in term_dict.keys():
-                    self.inverted_idx[term]= 1
-                    term_dict[term] = 1
-                    doc_pos[term.lower()] = {3: self.find_postion(url, term, False)}
-                else:
-                    self.inverted_idx[term] +=1
-                    term_dict[term] += 1
-                    doc_pos[term.lower()] = {3: self.find_postion(url, term, True)}
+            # if term in tokenized_text:
+            #     if term not in term_dict.keys():
+            #         term_dict[term] = 1
+            #         doc_pos[term.lower()] = {3: self.find_postion(url, term, False)}
+            #     else:
+            #         term_dict[term] += 1
+            #         doc_pos[term.lower()] = {3: self.find_postion(url, term, True)}
+            #
+            # else:
+            # try:
+            if term not in term_dict.keys():
+                term_dict[term] = 1
+                doc_pos[term.lower()] = self.find_postion(full_text, term, False)
 
             else:
-                if term not in term_dict.keys():
-                    self.inverted_idx[term] = 1
-                    term_dict[term] = 1
-                    doc_pos[term.lower()] = {2: self.find_postion(full_text, term, False)}
-
-                else:
-                    self.inverted_idx[term] += 1
-                    term_dict[term] += 1
-                    doc_pos[term.lower()] = {2: self.find_postion(full_text, term, True)}
-
+                term_dict[term] += 1
+                doc_pos[term.lower()] = self.find_postion(full_text, term, True)
+            # except:
+            #     print(term)
+        # tokenized_text.append()
         document = Document(tweet_id, tweet_date, full_text, url, retweet_text, retweet_url, quote_text,
                             quote_url, term_dict, doc_length, doc_pos)
         # self.tempDocuments=self.tempDocuments+document
+
         return document
 
     ############ private func ##############################
@@ -284,6 +310,11 @@ class Parse:
 
 
     def parser_url(self, url):
+        """
+        :param url: a url from twitter.
+        :return: url split according to the url laws.
+        #https://www.instagram.com/p/CD7fAPWs3WM/?igshid=o9kf0ugp1l8x - https, www, instagram.com, p, CD7fAPWs3WM, igshid, o9kf0ugp1l8x
+        """
         url_parse=[]
         if len(url)>2:
             url_parse = re.split('[\[/:"//?={"\]]' , url)
@@ -310,3 +341,10 @@ class Parse:
                 index = full_text.find(term.title())
 
         return index
+
+    def reaplce_url ( self , i ,full_text, url_full_text , url_external ) :
+        for term in url_full_text :
+            extrenal_idx = url_external[i]
+            full_text = full_text.replace(term , extrenal_idx[0 :len(extrenal_idx) - 1])
+            i += 1
+        return full_text

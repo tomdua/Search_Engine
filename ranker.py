@@ -122,3 +122,9 @@ class Ranker:
         :return: list of relevant document
         """
         return sorted_relevant_doc[:k]
+
+
+    # def rank_relevant_id( self, list, docs ):
+    #     self.ranker =list
+    #     self.document=docs
+    #     self.ranker
