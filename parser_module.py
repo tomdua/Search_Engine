@@ -18,7 +18,7 @@ class Parse:
         new_words = {"", "www", '', "https", "http", "^", "!", "?", "^", "&", "*", "#", "(", ")", ",", ";", ":", "{",
                      "}", "-", "[", "]", "<", ">", "|", "+", "`", "'", ".", "...", "..", "@", "’", "I", "“", "•",
                      "️", "⬇", "'s", "``", "''", "”", "@:", "_", "++.pls", "....", "......", ".....", "=", "—",
-                     "status", "instagram.com", "twitter.com", "t.co", "rt", "RT", "%","/", "…"}
+                     "status", "instagram.com", "twitter.com", "t.co", "rt", "RT", "%", "/", "…",'"','་','᠂','$','":"','\\','__vfz','_twitter','_ツ_','_____','__','______________','_____________','__________','___','______________________','_______','________','________________________','_______________________________','______','~','~r','~3',}
 
         # for i in new_words:
         self.stop_words.extend(new_words)
@@ -35,7 +35,7 @@ class Parse:
         """
 
         if text:
-            text_tokens=[]
+            text_tokens = []
             try:
                 if '%' in text or 'percent' in text or 'percentage' in text or 'percentage' in text or 'Thousand' in text or 'Million' in text or 'Billion' in text:
                     if 'percentage' in text:
@@ -83,7 +83,7 @@ class Parse:
                 rx2 = re.compile(r"[-+]?\d+\,+\d+\,*\d+\,*\d+")
                 text2 = rx2.findall(text)
                 if text2:
-                    text2=[w for w in text2 if len(w)<16]
+                    text2 = [w for w in text2 if len(w) < 16]
                     text = rx2.sub("", text)
                     text2 = [self.change_format(int(w.replace(',', ''))) for w in text2]
                 #########################################################################
@@ -124,7 +124,6 @@ class Parse:
                 if text5:
                     text = rx2.sub("", text)
 
-
                 #############################################################
 
                 ########## for some other words #############################
@@ -139,10 +138,10 @@ class Parse:
                 text_tokens = word_tokenize(text)
                 # text_tokens=regexp_tokenize(text, pattern=r"\s|[\.,;']\d+\.\d+", gaps=True)
                 text_tokens = text_tokens + text0 + text1 + text3_new + text2 + text5 + tokinzed_hatags + tokinzed_mentions
-                if not self.expandUrl:
-                    if text4_correct:
-                        for w in text4_correct:
-                            text_tokens = text_tokens + w
+                # if not self.expandUrl:
+                if text4_correct:
+                    for w in text4_correct:
+                        text_tokens = text_tokens + w
             except:
                 print("something wrong with {}", text)
         else:
@@ -168,62 +167,95 @@ class Parse:
         quote_url = doc_as_list[7]
         term_dict = {}
         doc_pos = {}
-        self.expandUrl = False
+        # self.expandUrl = False
 
-
-        if len(url)>2:
-            self.expandUrl = True
+        # if len(url)>2:
+        #     self.expandUrl = True
         # line = " Call for work from home  https://t.co/fKiS5W3w2o"
         #
         # full_text = full_text + line
+        try:
+            url_external = re.findall('(https?://[^\s]+)', url)
+            url_full_text = re.findall('(https?://[^\s]+)', full_text)
+            ###############################################################
+            if (url_external) or (url_full_text):
+                ########## Url of full text empty, but extrnal not#############
+                if (len(url_full_text) == 0 and len(url_external) > 0):
+                    for i in range(len(url_external)):
+                        full_text += " " + url_external[i]
+
+                ########## Url of full text and extrnal equal #################
+                if len(url_external) == len(url_full_text):
+                    i = 0
+                    full_text = self.reaplce_url(i, full_text, url_full_text, url_external)
+
+                ########## extrnal is bigger ##################################
+                if (len(url_external) > len(url_full_text) and len(url_full_text) > 0):
+                    i = 0
+                    full_text = self.reaplce_url(i, full_text, url_full_text, url_external)
+                    i = len(url_external) - len(url_full_text)
+                    for i in range(len(url_external)):
+                        full_text += url_external[i]
+
+                ########## url_full_text is bigger #############################
+                if (len(url_full_text) > len(url_external) and len(url_external) > 0):
+                    i = 0
+                    for term in url_external:
+                        url_full_text = url_external[i]
+                        full_text = full_text.replace(url_full_text, term[0:len(term) - 1])
+                        i += 1
+        except:
+            print("something wrong with {}", tweet_id)
+
+
+        test = 'acheived,,but they'
+        full_text= full_text + test
+
         tokenized_text = self.parse_sentence(full_text)
         tokinzed_quote = self.parse_quotes(full_text)
         tokinzed_entity = self.get_continuous_chunks(full_text)
 
+        # tokinzed_url=[]
+        # if self.expandUrl:
+        #     tokinzed_url = self.parser_url(url)
+        #     tokenized_text = tokenized_text + tokinzed_url
+
+        if self.stemming:
+            tokenized_text = [self.stemming.stem_term(w) for w in tokenized_text if
+                              self.stemming.stem_term(w) not in self.stop_words]
+        else:
+            tokenized_text = [w for w in tokenized_text if w not in self.stop_words]
+
         # enter to temp entity dic
         for entity in tokinzed_entity:
-            if entity not in self.entity_temp.keys():
+            if entity not in self.entity_temp:
                 self.entity_temp[entity] = 1
             else:
                 self.entity_temp[entity] += 1
 
         tokenized_text = tokenized_text + tokinzed_quote + tokinzed_entity
 
-        tokinzed_url=[]
-        if self.expandUrl:
-            tokinzed_url = self.parser_url(url)
-            tokenized_text = tokenized_text + tokinzed_url
-
-        # text_tokens = [w for w in tokenized_text if w not in self.stop_words]
-
-        if self.stemming:
-            text_tokens = [self.stemming.stem_term(w) for w in tokenized_text if
-                           self.stemming.stem_term(w) not in self.stop_words]
-        else:
-            text_tokens = [w for w in tokenized_text if w not in self.stop_words]
+        firstInDoc = False
+        firstInDict = False
 
         doc_length = len(full_text)
-        for term in text_tokens:
-            if term in tokinzed_url:
-                if term not in term_dict.keys():
-                    self.inverted_idx[term]= 1
-                    term_dict[term] = 1
-                    doc_pos[term.lower()] = {3: self.find_postion(url, term, False)}
-                else:
-                    self.inverted_idx[term] +=1
-                    term_dict[term] += 1
-                    doc_pos[term.lower()] = {3: self.find_postion(url, term, True)}
+        for term in tokenized_text:
+            if term not in term_dict:
+                # self.inverted_idx[term] = 1
+                term_dict[term] = 1
+                firstInDoc = True
+                doc_pos[term.lower()] = self.find_postion(full_text, term, False)
+            if not firstInDoc:
+                # self.inverted_idx[term] += 1
+                term_dict[term] += 1
+                doc_pos[term.lower()] = self.find_postion(full_text, term, False)
+            if term not in self.inverted_idx:
+                self.inverted_idx[term] = 1
+                firstInDict = True
+            if not firstInDict:
+                self.inverted_idx[term] += 1
 
-            else:
-                if term not in term_dict.keys():
-                    self.inverted_idx[term] = 1
-                    term_dict[term] = 1
-                    doc_pos[term.lower()] = {2: self.find_postion(full_text, term, False)}
 
-                else:
-                    self.inverted_idx[term] += 1
-                    term_dict[term] += 1
-                    doc_pos[term.lower()] = {2: self.find_postion(full_text, term, True)}
 
         document = Document(tweet_id, tweet_date, full_text, url, retweet_text, retweet_url, quote_text,
                             quote_url, term_dict, doc_length, doc_pos)
@@ -271,22 +303,20 @@ class Parse:
         :return: hashtags terms split from the text.
         #stayAtHome - stay, at, home, #stayathome
         """
-        #text='#tom_matan'
+        # text='#tom_matan'
         # text= "#TomMatanNoy dfsafasdfasfds #rrerretre trotro #Almog_Rotam_ew"
         hashtags_trem = []
-        tag=re.findall(r'(#+\w*)', text)
+        tag = re.findall(r'(#+\w*)', text)
         if tag:
             for term in tag:
                 hashtags_trem.append(term[0] + term[1:].lower())
                 hashtags_trem += [w.lower() for w in re.findall('[a-z|A-Z][^A-Z|_]*', term)]
         return hashtags_trem
 
-
-
     def parser_url(self, url):
-        url_parse=[]
-        if len(url)>2:
-            url_parse = re.split('[\[/:"//?={"\]]' , url)
+        url_parse = []
+        if len(url) > 2:
+            url_parse = re.split('[\[/:"//?={"\]]', url)
             # url_parse = [w for w in terms if w not in self.stop_words]
         return url_parse
 
@@ -310,3 +340,10 @@ class Parse:
                 index = full_text.find(term.title())
 
         return index
+
+    def reaplce_url(self, i, full_text, url_full_text, url_external):
+        for term in url_full_text:
+            extrenal_idx = url_external[i]
+            full_text = full_text.replace(term, extrenal_idx[0:len(extrenal_idx) - 1])
+            i += 1
+        return full_text

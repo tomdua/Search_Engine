@@ -10,33 +10,29 @@ from indexer import Indexer
 from searcher import Searcher
 import utils
 import time
-from collections import Counter
+import psutil#TODO
+import glob
 
-
-def findInList(val, lis):
-    ind = [(j, i, k) for j, x in enumerate(lis) for i, y in enumerate(x) \
-           for k, z in enumerate(y) if z == val]
-    return ind[0][0] if ind else None
 
 
 def run_engine():
     """
     :return:
     """
-    # inverted_idx={}
-    # with open('inverted_idx.txt', 'r') as sample:
-    #     for line in sample:
-    #         inverted_idx.update(json.loads(line))
+
+    mem =  psutil.virtual_memory()
+    mem1 = mem.total * 0.9
     #
-    # posting_file = {}
-    # with open('posting_file.txt', 'r') as sample:
-    #     for line in sample:
-    #         posting_file.update(json.loads(line))
-    #
-    # documents_info = {}
-    # with open('documents_info.txt', 'r') as sample:
-    #     for line in sample:
-    #         documents_info.update(json.loads(line))
+    # files_list=[]
+    # files = glob.glob('./pickles/*.pkl')
+    # for f in files:
+    #     f=f.replace('./pickles\\', '')
+    #     f=f.replace('.pkl', '')
+    #     to_arr = utils.load_obj(f)
+    #     files_list.append(to_arr[0])
+    # files=[]
+
+
 
     config = ConfigClass()
     r = ReadFile(corpus_path=config.get__corpusPath())
@@ -46,7 +42,7 @@ def run_engine():
     start_time = time.time()
 
     documents_list = r.read_file("asd")
-    documents_num= len(documents_list)
+    documents_num = len(documents_list)
     # utils.save_obj(documents_list, "documents_list")
     print("--- %s seconds parser readStop---" % (time.time() - start_time))
 
@@ -56,122 +52,109 @@ def run_engine():
     # usingStemming = input("You will want to use stemming?(yes/no): ")
     # if usingStemming == 'yes':
     #     p.stemming = stemming
-    # import time
-    # indexer.parse = p
-    # documents_list = utils.load_obj("documents_list")
-    # Iterate over every document in the file
-    # count = 1
-    # while documents_list:
 
+
+    # Iterate over every document in the file
     for idx, document in enumerate(documents_list, 1):
 
         if idx == 1:
             print("--- %s seconds parser start---" % (time.time() - start_time))
         # parse the document
-        # document = documents_list.pop(0)
         parsed_document = p.parse_doc(document)
         append(parsed_document)
-        print(idx)
-        if idx % 50000 == 0 or idx == documents_num:
-            print("to mem")
-            # with open('inverted_idx_temp.txt', 'a') as file:
-            #     file.write(json.dumps(p.inverted_idx))
-            #     file.write('\n')
-            # with open('entity_temp.txt', 'a') as file:
-            #     file.write(json.dumps(p.entity_temp))
-            #     file.write('\n')
-            utils.save_obj(p.inverted_idx, "inverted_idx_afterParser")
-            utils.save_obj(p.entity_temp, "entity_temp")
-            p.entity_temp = {}
-            p.inverted_id = {}
+
+        # print(idx)
+
+        if mem.used>=mem1:
+            print('the idx is',idx)
 
         if idx == documents_num:
-            # p.entity_temp = {}
-            # p.inverted_id = {}
+
             documents_list = []
             print("--- %s seconds parser end---" % (time.time() - start_time))
 
-        # count += 1
-        # documents_list.remove(document)
+
 
     for idx, document in enumerate(documents_list_after_parse, 1):
 
         if idx == 1:
-            #indexing = utils.load_obj("inverted_idx_afterParser")
-            # inverted_idx={}
-            # with open('inverted_idx_temp.txt', 'r') as sample:
-            #     for line in sample:
-            #         indexer.indexing_temp.update(json.loads(line))
-            entity_to_index = Counter()
-            entityList = utils.load_obj("entity_temp")
-            for entity in entityList:
-                x = Counter(entity)
-                entity_to_index = entity_to_index + x
-                # entity_to_index.update(entity)
-                # entityList.remove(entity)
-            for k in list(entity_to_index):
-                if entity_to_index[k] == 1:
-                    del entity_to_index[k]
-            indexer.entity_temp = entity_to_index
-            entityList = []
-            entity_to_index={}
 
 
-            indexingList = utils.load_obj("inverted_idx_afterParser")
-            indexing_to_index=Counter()
-            for index in indexingList:
-                x = Counter(index)
-                indexing_to_index = indexing_to_index + x
-                # indexingList.remove(index)
-            indexer.indexing_temp=indexing_to_index
-            indexingList = []
-            indexing_to_index={}
+            indexer.entity_temp = p.entity_temp
+            p.entity_temp = {}
 
-            # with open('entity_temp.txt', 'r') as sample:
-            #     for line in sample:
-            #         indexer.entity_temp.update(json.loads(line))
-            # indexer.entity_temp = entity_temp
-            print("--- %s seconds index start---" % (time.time() - start_time))
+            # indexing_to_index= dealing_with_upper_lower(p.inverted_idx)
+            # indexing_to_index = Counter()
+            # indexingList = utils.load_obj("inverted_idx_afterParser")
+            # for index in documents_list_after_parse:
+            #     x = Counter(index.term_doc_dictionary)
+            #     indexing_to_index = indexing_to_index + x
+            # indexingList.remove(index)
 
-        indexer.add_new_doc(document)
-        # print(idx)
-        # print("--- %s seconds in---" % (time.time() - start_time))
-        print(idx)
-
-        if idx % 50000 == 0 or idx == documents_num:
-            # print("--- %s seconds out---" % (time.time() - start_time))
-
-            # print('Finished parsing and indexing 1000 documents. Starting to export files')
-            # print('Finished parsing and indexing. Starting to export files')
             #
-            utils.save_obj(indexer.AB_dict_posting, "posting_file")
+
+
+
+
+            indexer.indexing_temp = p.inverted_idx
+            p.inverted_idx = {}
+
+
+            print("--- %s seconds index start---" % (time.time() - start_time))
+        if document.term_doc_dictionary:
+            indexer.add_new_doc(document)
+
+        if mem.used>=mem1:
+            print('the idx is {}',idx)
+
+        #
+        if idx == documents_num:
+
+            # for letter in indexer.AB_dict_posting:
+            #     with open('AB_dict_posting_{}.txt',letter, 'a') as file:
+            #         file.write(json.dumps(letter))
+            #         file.write('\n')
+            # name = 'posting_file_' + str2
+            # str1 = './pickles/' + name + '.pkl'
+
+
+            count=0
+            for letter in indexer.AB_dict_posting:
+                try:
+                    # if letter=='"':
+                    #     letter='Ap'
+
+                    string='posting_file_'+letter
+
+                    if letter.isupper():
+                        string = '/uppers/posting_file_' + letter
+                    if letter.islower():
+                        string = '/lowers/posting_file_' + letter
+                    # if letter=='"':
+                    #     string='posting_file_Ap'
+                    utils.save_obj(indexer.AB_dict_posting[letter], string)
+                except:
+
+                    string = 'posting_file_A'+str(count)#TODO
+                    utils.save_obj(indexer.AB_dict_posting[letter], string)
+
+                    # print("something wrong with {}", string)
+                    count+=1
+
+
+            indexer.posting_file = {}
             indexer.AB_dict_posting = {}
 
-            utils.save_obj(indexer.dict_dictionary, "inverted_idx")
-            indexer.dict_dictionary = {}
+            # for term in indexer.AB_dict_posting:
+            #     utils.save_obj(indexer.AB_dict_posting[term[0]], "posting_file_{0}".format(term[0]))
 
-            utils.save_obj(indexer.documents_info, "documents_info")
-            indexer.documents_info = {}
-
-            #
-            print("to mem")
-            # with open('inverted_idx.txt', 'a') as file:
-            #     file.write(json.dumps(indexer.dict_dictionary))
-            #     file.write('\n')
-            # indexer.dict_dictionary={}
-            # with open('posting_file.txt', 'a') as file:
-            #     file.write(json.dumps(indexer.AB_dict_posting))
-            #     file.write('\n')
-            # indexer.AB_dict_posting={}
-            # with open('documents_info.txt', 'a') as file:
-            #     file.write(json.dumps(indexer.documents_info))
-            #     file.write('\n')
-            # indexer.documents_info={}
-        # documents_list_after_parse.remove(document)
+        #     utils.save_obj(indexer.documents_info, "documents_info")
+        #     indexer.documents_info = {}
 
 
-    indexer.indexing_temp={}
-    indexer.entity_temp={}
+
+    indexer.indexing_temp = {}
+    indexer.entity_temp = {}
     print("--- %s seconds index end ---" % (time.time() - start_time))
     test3 = 1
 
