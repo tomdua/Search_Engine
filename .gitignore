@@ -12,3 +12,5 @@ pickles
 documents_info.txt
 inverted_idx.txt
 posting_file.txt
+glove.twitter.27B.200d.txt
+glove.twitter.27B.25d.txt
