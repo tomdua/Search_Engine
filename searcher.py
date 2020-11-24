@@ -1,13 +1,22 @@
-import json
+
 
 from scipy import spatial
-
+import pandas as pd
 from parser_module import Parse
 from ranker import Ranker
+import glob
 import utils
+
+import numpy as np
+import collections
+from nltk.corpus import stopwords
 import os
 import re
 import string
+import time
+from gensim.scripts.glove2word2vec import glove2word2vec
+from gensim.models import KeyedVectors
+
 import numpy as np
 import networkx as nx
 import matplotlib.pyplot as plt
@@ -15,9 +24,8 @@ from nltk.corpus import stopwords
 from nltk.tokenize import sent_tokenize
 from nltk.stem.wordnet import WordNetLemmatizer
 from sklearn.metrics.pairwise import cosine_similarity
-
-# import torch
-# import torchtext
+from operator import itemgetter, attrgetter
+import itertools
 class Searcher:
 
     def __init__(self, inverted_index):
@@ -29,6 +37,7 @@ class Searcher:
         self.ranker = Ranker()
         self.inverted_index = inverted_index
 
+
     def relevant_docs_from_posting(self, query):
         """
         This function loads the posting list and count the amount of relevant documents per term.
@@ -36,72 +45,78 @@ class Searcher:
         :return: dictionary of relevant documents.
         """
 
-        # with open('posting_file.txt') as json_file:
-        #     posting_file = json.load(json_file)
-        # self.ranker.posting_file=posting_file
-        self.ranker.inverted_idx= self.inverted_index
-        relevant_docs = {}
-
-        gloveFile = "glove.twitter.27B.200d.txt"
-        dim = 200
-        stop = set(stopwords.words('english'))
+        start_time = time.time()
 
 
-        def loadGloveModel(gloveFile):
-            word_embeddings = {}
-            f = open(gloveFile, encoding='utf-8')
-            for line in f:
-                values = line.split()
-                word = values[0]
-                coefs = np.asarray(values[1:], dtype='float32')
-                # test=len(coefs)
-                if len(coefs)==200:
-                    word_embeddings[word] = coefs
-            f.close()
-            return word_embeddings
+        glove_input_file = 'glove.twitter.27B.25d.txt'
+        word2vec_output_file = 'glove.twitter.27B.25d.txt.word2vec'
+        glove2word2vec(glove_input_file, word2vec_output_file)
 
-        word_embeddings = loadGloveModel(gloveFile)
+        # load the Stanford GloVe model
+        filename = 'glove.twitter.27B.25d.txt.word2vec'
+        model = KeyedVectors.load_word2vec_format(filename, binary=False)
 
-        print("Vocab Size = ", len(word_embeddings))
-        #test=word_embeddings.keys()
-        def find_closest_embeddings(embedding):
-            return sorted(word_embeddings.keys(),key=lambda word: spatial.distance.euclidean(word_embeddings[word], embedding))
+        print("--- %s seconds model load---" % (time.time() - start_time))
 
-        test=find_closest_embeddings(word_embeddings["king"])
-        print(test[1:6])
-
-        tokenized_query=self.parser.parse_sentence(query)
-
-        if self.stemming:
-            tokenized_query = [self.stemming.stem_term(w) for w in tokenized_query if
-                           self.stemming.stem_term(w) not in stop ]
-        else:
-            tokenized_query = [w for w in tokenized_query if w not in stop]
+        word_list={}
+        try:
+            for term in query:
+                result2 = model.most_similar(term)
+                to_arr = [x[0] for x in result2]
+                for w in to_arr[0:3]:
+                    if w in word_list:
+                        word_list[w] += 1
+                    else:
+                        word_list[w] = 1
+            # test=find_closest_embeddings(word_embeddings["dog"])
+            # print(test[0:3])
+        except:
+            print('term {} not found in similarity'.format(term))
 
 
-        for term in tokenized_query:
+
+        print("--- %s seconds words2 load---" % (time.time() - start_time))
+
+
+        # print(result2)
+
+
+
+        relevant_docs={}
+        # tokenized_query='hydroxychloroquine, zinc, and Zithromax can cure coronavirus'
+        words_list = []
+        once = True
+        for term in word_list:
             try: # an example of checks that you have to do
+                # files_list = []
+                if term[0].islower():
+                    file='\\lowers\\posting_file_'+term[0]
+                    posting_file = utils.load_obj(file)
+                    posting_file = posting_file[0]
+                    posting_file = posting_file[term]
+                elif term[0].islower():
+                    file='\\uppers\\posting_file_'+term[0]
+                    posting_file = utils.load_obj(file)
+                    posting_file = posting_file[0][term]
+                else:
+                    file='\\others\\posting_file_'+term[0]
+                    posting_file = utils.load_obj(file)
+                    posting_file = posting_file[0][term]
 
+                for item in posting_file:
+                    if item[0] not in relevant_docs:
+                        relevant_docs[item[0]]=[]
+                    relevant_docs[item[0]].append(term)
 
-
-
-
-
-                if term in self.inverted_index.keys():
-                    indexes_in_posting=[self.inverted_index[term][1],self.inverted_index[term][2]]
-                    #list_in_posting = posting_file[indexes_in_posting[0],indexes_in_posting[1]]
-                    x = indexes_in_posting[0]
-                    y = indexes_in_posting[1]
-                    #test= posting_file['s'][135]
-                    # list_in_posting = posting_file[x][y]
-                    # for item in list_in_posting:
-                    #     if item[1] not in relevant_docs.keys():
-                    #         relevant_docs[item[1]] = 1
-                    #     else:
-                    #         relevant_docs[item[1]] += 1
+                    # if item[0] in relevant_docs:
+                    #     relevant_docs[item[0]] += 1
             except:
                 print('term {} not found in posting'.format(term))
 
+
+
+        relevant_docs= dict(sorted(relevant_docs.items(), key=lambda item: len(item[1]), reverse=True))
+        relevant_docs= dict(itertools.islice(relevant_docs.items(), 200))
 
 
         return relevant_docs
