@@ -10,7 +10,7 @@ from indexer import Indexer
 from searcher import Searcher
 import utils
 import time
-import psutil#TODO
+# import psutil
 import glob
 
 
@@ -20,8 +20,8 @@ def run_engine():
     :return:
     """
 
-    mem =  psutil.virtual_memory()
-    mem1 = mem.total * 0.9
+    # mem =  psutil.virtual_memory()
+    # mem1 = mem.total * 0.9
     #
     # files_list=[]
     # files = glob.glob('./pickles/*.pkl')
@@ -65,8 +65,8 @@ def run_engine():
 
         # print(idx)
 
-        if mem.used>=mem1:
-            print('the idx is',idx)
+        # if mem.used>=mem1:
+        #     print('the idx is',idx)
 
         if idx == documents_num:
 
@@ -97,6 +97,8 @@ def run_engine():
 
 
             indexer.indexing_temp = p.inverted_idx
+            utils.save_obj(indexer.indexing_temp,"inverted_idx")
+
             p.inverted_idx = {}
 
 
@@ -104,8 +106,8 @@ def run_engine():
         if document.term_doc_dictionary:
             indexer.add_new_doc(document)
 
-        if mem.used>=mem1:
-            print('the idx is {}',idx)
+        # if mem.used>=mem1:
+        #     print('the idx is {}',idx)
 
         #
         if idx == documents_num:
@@ -148,39 +150,61 @@ def run_engine():
             # for term in indexer.AB_dict_posting:
             #     utils.save_obj(indexer.AB_dict_posting[term[0]], "posting_file_{0}".format(term[0]))
 
-        #     utils.save_obj(indexer.documents_info, "documents_info")
-        #     indexer.documents_info = {}
+            utils.save_obj(indexer.dict_dictionary, "dict_dictionary")
+            indexer.documents_info = {}
 
 
 
     indexer.indexing_temp = {}
-    indexer.entity_temp = {}
+    # indexer.entity_temp = {}
     print("--- %s seconds index end ---" % (time.time() - start_time))
     test3 = 1
+    return indexer.entity_temp
 
+
+def load_documents_info():
+    print('Load dict_dictionary')
+    dict_dictionary = utils.load_obj("dict_dictionary")
+    # inverted_index = inverted_index[0]
+    return dict_dictionary
 
 def load_index():
     print('Load inverted index')
-    inverted_idx = {}
-    with open('inverted_idx.txt', 'r') as sample:
-        for line in sample:
-            inverted_idx.update(json.loads(line))
-    return inverted_idx
+    inverted_index = utils.load_obj("inverted_idx")
+    # inverted_index = inverted_index[0]
+    return inverted_index
 
 
-def search_and_rank_query(query, inverted_index, k):
+def search_and_rank_query(query, inverted_index, k, stem,dict_dictionary,entity):
     p = Parse()
-    query_as_list = p.parse_sentence(query)
-    searcher = Searcher(inverted_index)
+    config = ConfigClass()
+    indxer = Indexer(config)
+
+    query_as_list = p.parse_sentence(query,False)
+    query_as_dict = dict.fromkeys(query_as_list, 1)
+    for term in query_as_list:
+        entity,query_as_dict,term = indxer.small_big_latter(entity,inverted_index,query_as_dict,term)
+    # p.stemming = stem
+    # query_as_list = p.stem_quary( stem, query_as_dict)##change tolist
+    searcher = Searcher(inverted_index,dict_dictionary)
     relevant_docs = searcher.relevant_docs_from_posting(query_as_list)
     ranked_docs = searcher.ranker.rank_relevant_doc(relevant_docs)
     return searcher.ranker.retrieve_top_k(ranked_docs, k)
 
 
 def main():
-    run_engine()
+    entity = run_engine()
+    inverted_index = load_index()
+    dict_dictionary= load_documents_info()
+    stemming = Stemmer()
+    p = Parse()
+    search_and_rank_query('Being #farFromHome @one121_1 "tom duany" ✌ Donald Trump  10.6 percent 12,123  ' , inverted_index , 2, stemming,dict_dictionary,entity)
     # query = input("Please enter a query: ")
     # k = int(input("Please enter number of docs to retrieve: "))
+    # usingStemming = input("You will want to use stemming?(yes/no): ")
+    # if usingStemming == 'yes':
+    #     p.stemming = stemming
+
     # inverted_index = load_index()
     # # print(inverted_index)
     # for doc_tuple in search_and_rank_query(query, inverted_index, k):

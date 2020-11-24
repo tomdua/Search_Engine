@@ -11,14 +11,37 @@ from document import Document
 from nltk.tree import Tree
 
 
+
 class Parse:
 
     def __init__(self):
         self.stop_words = stopwords.words('english')
-        new_words = {"", "www", '', "https", "http", "^", "!", "?", "^", "&", "*", "#", "(", ")", ",", ";", ":", "{",
-                     "}", "-", "[", "]", "<", ">", "|", "+", "`", "'", ".", "...", "..", "@", "’", "I", "“", "•",
-                     "️", "⬇", "'s", "``", "''", "”", "@:", "_", "++.pls", "....", "......", ".....", "=", "—",
-                     "status", "instagram.com", "twitter.com", "t.co", "rt", "RT", "%", "/", "…",'"','་','᠂','$','":"','\\','__vfz','_twitter','_ツ_','_____','__','______________','_____________','__________','___','______________________','_______','________','________________________','_______________________________','______','~','~r','~3',}
+        new_words = {"www" , '' , "https" , "http" , "^" , "!" , "?" , "^" , "&" , "*" , "#" , "(" , ")" , "," , ";" ,
+                     ":" , "{" ,
+                     "}" , "-" , "[" , "]" , "<" , ">" , "|" , "+" , "`" , "'" , "." , "..." , ".." , "@" , "’" , "I" ,
+                     "“" , "•" ,
+                     "" , "⬇" , "'s" , "``" , "''" , "”" , "@:" , "_" , "++.pls" , "...." , "......" , "....." , "=" ,
+                     "—" ,
+                     "status" , "instagram.com" , "twitter.com" , "t.co" , "rt" , "RT" , "%" , "/" , "…" , '"' , '་' ,
+                     '᠂' , '$' ,
+                     '":"' , '\\' , '_vfz' , '_twitter' , 'ツ' , '_' , '' , '____' , '____' ,
+                     '___' , '_' , '_______' , '__' , '__' , '_________' ,
+                     '__________' , '___' , '~' , '~r' , '~3' , '=nd' , '£' , '​' , '‍' , '‐' , '–' , '‘' ,
+                     '⁦' , '🩸' , '🦠' , '🦖' , '🥺' , '🥰' , '🇺' , '🇹' , '🇸' , '🇷' , '🇴' , '🇳' , '🇰' , '🇮' ,
+                     '🇪' , '🇩' ,
+                     '🇨' , '🇦' , '⬇️' , '✨' , '♂' , '☺' , '▶' , '⅕' , '™' , '£10bn' , '⁦cheived' , '™️' , '☺️' ,
+                     '🇨🇦' , '🇩🇰' ,
+                     '🇩🇪' , '🇮🇹' , '🇳🇴' , '🇷🇸' , '🇸🇪' , '🇺🇸' , '🤭' , '+%' , '--' , '🤦‍♂️' , '🤪' , 'à' ,
+                     'ér' , 'ò' ,
+                     'θ' , '==' , '^^' , '¯\\_' , '¯' , '·' , '»' , '½' , '======' , '====' , '===================' ,
+                     '_source' ,
+                     'i' , 'ii' , 'iii' , '̶A̶t̶l̶a̶n̶t̶a̶' , 'ł' , 'łł' , 'ʸ' , 'θsir_type' , 'μm' , 'υ' , 'через' ,
+                     'ѵ' , '¡¡¡' ,
+                     '¡¡' , '¡' , '¡.§¿' , '¥' , '¨·.·¨' , '¨Planning' , '¨the' , '©' , '«' , '³' , '´flatearth' ,
+                     '´should' , '´Д' ,
+                     '¿' , 'ˊˋ' , '˙' , '˚.˚o' , '˚' , '̩̩͙' , 'Ć' , 'Đ' , 'Ɇ' , 'İ' , 'Ʉ' , 'Ɏ' , 'μ' , 'ч' , 'ѵ' ,
+                     'ˡˢ' , 'ʷʰʸ' , 'ɴʏ'}
+
 
         # for i in new_words:
         self.stop_words.extend(new_words)
@@ -27,13 +50,13 @@ class Parse:
         self.stemming = None
         self.inverted_idx = {}
 
-    def parse_sentence(self, text):
+    def parse_sentence(self, text,doc):
         """
         This function tokenize, remove stop words and apply lower case for every word within the text
         :param text:
         :return:
         """
-
+        q_text=text
         if text:
             text_tokens = []
             try:
@@ -149,6 +172,15 @@ class Parse:
         # text_tokens_without_stopwords = [w for w in text_tokens if w not in self.stop_words]
         # if self.stemming:
         #     text_tokens_without_stopwords = [self.stemming.stem_term(w) for w in text_tokens_without_stopwords]
+        if not doc:
+            #steming to query
+            text_setem=self.stem_quary(text_tokens)
+            tokinzed_quote = self.parse_quotes(q_text)
+            tokinzed_entity = self.get_continuous_chunks(q_text)
+            text_tokens= text_setem+tokinzed_quote+tokinzed_entity
+
+
+
         return text_tokens
 
     def parse_doc(self, doc_as_list):
@@ -175,10 +207,11 @@ class Parse:
         #
         # full_text = full_text + line
         try:
+            # url = '{"https://t.co/22Rm2mUcaw":"https://twitter.com/i/web/status/1290360950751715329"}'
             url_external = re.findall('(https?://[^\s]+)', url)
             url_full_text = re.findall('(https?://[^\s]+)', full_text)
             ###############################################################
-            if (url_external) or (url_full_text):
+            if (url_external):
                 ########## Url of full text empty, but extrnal not#############
                 if (len(url_full_text) == 0 and len(url_external) > 0):
                     for i in range(len(url_external)):
@@ -208,10 +241,10 @@ class Parse:
             print("something wrong with {}", tweet_id)
 
 
-        test = 'acheived,,but they'
-        full_text= full_text + test
-
-        tokenized_text = self.parse_sentence(full_text)
+        # test = 'acheived,,but they'
+        # full_text= full_text + test
+        doc=True
+        tokenized_text = self.parse_sentence(full_text,doc)
         tokinzed_quote = self.parse_quotes(full_text)
         tokinzed_entity = self.get_continuous_chunks(full_text)
 
@@ -220,11 +253,11 @@ class Parse:
         #     tokinzed_url = self.parser_url(url)
         #     tokenized_text = tokenized_text + tokinzed_url
 
-        if self.stemming:
-            tokenized_text = [self.stemming.stem_term(w) for w in tokenized_text if
-                              self.stemming.stem_term(w) not in self.stop_words]
-        else:
-            tokenized_text = [w for w in tokenized_text if w not in self.stop_words]
+        # if self.stemming:
+        #     tokenized_text = [self.stemming.stem_term(w) for w in tokenized_text if
+        #                       self.stemming.stem_term(w) not in self.stop_words]
+        # else:
+        #     tokenized_text = [w for w in tokenized_text if w not in self.stop_words]
 
         # enter to temp entity dic
         for entity in tokinzed_entity:
@@ -314,9 +347,12 @@ class Parse:
         return hashtags_trem
 
     def parser_url(self, url):
+        # url ='{"https://t.co/22Rm2mUcaw":"https://twitter.com/i/web/status/1290360950751715329"}'
+        rex = re.compile(r"https?://(www\.)?")
+        url=rex.sub('' , url).strip().strip('/')
         url_parse = []
         if len(url) > 2:
-            url_parse = re.split('[\[/:"//?={"\]]', url)
+            url_parse = re.split('[\[/:"//?=}{"\]]', url)
             # url_parse = [w for w in terms if w not in self.stop_words]
         return url_parse
 
@@ -327,8 +363,11 @@ class Parse:
         tokinzed_entity_new = [e for e in matches if len(e.split()) > 1]
         return tokinzed_entity_new
 
-    def find_postion(self, full_text, term, more_than_one):
 
+    def find_postion(self, full_text, term, more_than_one):
+        # if stemming:
+        #     stem =nltk.stem.SnowballStemmer('english')
+        #     term= self.stem(term)
         if more_than_one is True:
             index = [i for i in range(len(full_text)) if full_text.startswith(term, i)]
         else:
@@ -347,3 +386,13 @@ class Parse:
             full_text = full_text.replace(term, extrenal_idx[0:len(extrenal_idx) - 1])
             i += 1
         return full_text
+
+
+    def stem_quary(self, tokeinze):
+        if  self.stemming :
+            tokenized_text = [self.stemming.stem_term(w) for w in tokeinze if
+                              self.stemming.stem_term(w) not in self.stop_words]
+        else :
+            tokenized_text = [w for w in tokeinze if w not in self.stop_words]
+
+        return tokenized_text

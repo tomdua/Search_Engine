@@ -16,12 +16,12 @@ import os
 import re
 import string
 import numpy as np
-import networkx as nx
-import matplotlib.pyplot as plt
-from nltk.corpus import stopwords
-from nltk.tokenize import sent_tokenize
-from nltk.stem.wordnet import WordNetLemmatizer
-from sklearn.metrics.pairwise import cosine_similarity
+# import networkx as nx
+# import matplotlib.pyplot as plt
+# from nltk.corpus import stopwords
+# from nltk.tokenize import sent_tokenize
+# from nltk.stem.wordnet import WordNetLemmatizer
+# from sklearn.metrics.pairwise import cosine_similarity
 
 class Ranker:
     def __init__(self):
