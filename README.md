@@ -3,7 +3,7 @@
 
 ![BGU](https://github.com/tomdua/Ass-3_3-Front-Vue.js/blob/master/src/assets/ise-bgu.jpg?raw=true)
 
- #Operating Instructions:
+ ## Operating Instructions:
  1. Please enter a path to the corpus.
  2. Please enter a search query.
  3. Please select if you want to use the stemmer functions or not.
