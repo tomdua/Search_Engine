@@ -1,5 +1,6 @@
 # Information retrieval Part A
   * This is our part A project of the course 'Information retrieval' as part of a bachelor's degree in information systems engineering at "Ben Gurion university of the Negev in the Faculty of Engineering.
+
 ![BGU](https://github.com/tomdua/Ass-3_3-Front-Vue.js/blob/master/src/assets/ise-bgu.jpg?raw=true)
 
  #Operating Instructions:
