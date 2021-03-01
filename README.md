@@ -9,5 +9,5 @@
  3. Please select if you want to use the stemmer functions or not.
  
  ## Developers
-  * Almog Sarafian - 305069577 [Email](almogs575@gmail.com),[Git](https://github.com/almogs575),[Linkedin](https://www.linkedin.com/in/almog-sarafian-844326187/),
-  * Tom Duany - 206282477 [Email](tomduany@gmail.com),[Git](https://github.com/tomdua),[Linkedin](https://www.linkedin.com/in/tom-duany-1ab71b141/),
+  * Almog Sarafian -  [Email](almogs575@gmail.com),[Git](https://github.com/almogs575),[Linkedin](https://www.linkedin.com/in/almog-sarafian-844326187/),
+  * Tom Duany -  [Email](tomduany@gmail.com),[Git](https://github.com/tomdua),[Linkedin](https://www.linkedin.com/in/tom-duany-1ab71b141/),
